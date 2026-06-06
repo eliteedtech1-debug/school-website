@@ -20,6 +20,7 @@ import principal from "../assets/principal.png";
 import { useState, useEffect } from "react";
 import StoryScreen from "./StoryScreen";
 import CountUp from "./layout/CountUp";
+import { useWebsiteContent } from "../lib/useWebsiteContent";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 60 },
@@ -42,13 +43,27 @@ const staggerContainer = {
 const images = [image3, image4, image5];
 const Home = () => {
   const [index, setIndex] = useState(0);
+  const { getSection, getParagraphs, getMedia, meta } = useWebsiteContent();
+
+  const schoolName = meta?.school_name || "Our School";
+  const tagline    = meta?.tagline || "";
+  const address    = meta?.address || "";
+  const logoUrl    = meta?.logo_url || null;
+
+  // CMS overrides — fall back to hardcoded if section not configured
+  const heroImages     = getMedia('hero');
+  const carouselImages = heroImages.length > 0 ? heroImages.map(m => m.url) : images;
+  const heroTitle      = getSection('hero')?.title || null;
+  const heroParagraphs = getParagraphs('hero');
+  const welcomeParagraphs = getParagraphs('welcome');
+  const welcomeImage   = getMedia('welcome')[0]?.url || null;
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % images.length);
+      setIndex((prev) => (prev + 1) % carouselImages.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [carouselImages.length]);
 
   const features = [
     {
@@ -205,7 +220,7 @@ const Home = () => {
           <AnimatePresence>
             <motion.img
               key={index}
-              src={images[index]}
+              src={carouselImages[index]}
               className="absolute inset-0 w-full h-full object-cover"
               initial={{ opacity: 0, scale: 1.1 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -220,31 +235,43 @@ const Home = () => {
           {/* 🔹 النص */}
           <div className="relative z-20 flex items-center justify-center h-full">
             <div className="max-w-7xl mx-auto px-4 text-center">
-              <motion.img
-                src={logo}
-                className="w-28 h-28 mx-auto mb-6"
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 3, repeat: Infinity }}
-              />
+              {logoUrl ? (
+                <motion.img
+                  src={logoUrl}
+                  alt={schoolName}
+                  className="w-28 h-28 mx-auto mb-6 rounded-xl object-cover"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                />
+              ) : (
+                <motion.img
+                  src={logo}
+                  className="w-28 h-28 mx-auto mb-6"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                />
+              )}
 
               <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                Welcome to <br />
-                <span className="text-yellow-400">
-                  Dr. Kabiru Gwarzo Academy
-                </span>
+                {heroTitle ? (
+                  <span className="text-yellow-400">{heroTitle}</span>
+                ) : (
+                  <>Welcome to <br /><span className="text-yellow-400">{schoolName}</span></>
+                )}
               </h1>
 
-              <p className="text-xl md:text-2xl mb-6 text-yellow-400 font-semibold">
-                & Tahfeez - "Strive for Excellence"
-              </p>
-
-              <div className="flex items-center justify-center gap-2 mb-8">
-                <FiMapPin className="text-yellow-400" />
-                <p>
-                  No.296 Layin Road Safety, Maikalwa Naibawa Zaria Road,
-                  Kumbotso LGA, Kano-Nigeria
+              {(heroParagraphs[0] || tagline) && (
+                <p className="text-xl md:text-2xl mb-6 text-yellow-400 font-semibold">
+                  {heroParagraphs[0] || tagline}
                 </p>
-              </div>
+              )}
+
+              {address && (
+                <div className="flex items-center justify-center gap-2 mb-8">
+                  <FiMapPin className="text-yellow-400" />
+                  <p>{address}</p>
+                </div>
+              )}
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -292,10 +319,15 @@ const Home = () => {
             className="grid md:grid-cols-2 gap-12 items-center"
           >
             <div>
-              <h2 className="text-3xl font-bold mb-6">Welcome Message</h2>
-              <p className="text-lg mb-6 leading-relaxed">
-                "At Dr. Kabiru Gwarzo Academy, we are committed to nurturing young minds through a perfect blend of modern education and Islamic values. Our mission is to develop well-rounded individuals who excel academically while maintaining strong moral foundations."
-              </p>
+              <h2 className="text-3xl font-bold mb-6">
+                {getSection('welcome')?.title || 'Welcome Message'}
+              </h2>
+              {welcomeParagraphs.length > 0
+                ? welcomeParagraphs.map(p => (
+                    <p key={p.id} className="text-lg mb-4 leading-relaxed">{p.text}</p>
+                  ))
+                : <p className="text-lg mb-6 leading-relaxed">"At Dr. Kabiru Gwarzo Academy, we are committed to nurturing young minds through a perfect blend of modern education and Islamic values. Our mission is to develop well-rounded individuals who excel academically while maintaining strong moral foundations."</p>
+              }
               <div className="mb-6">
                 <h4 className="font-semibold text-blue-950 dark:text-yellow-400">Adamu Muhammad Alkali</h4>
                 <p className="text-gray-600 dark:text-gray-400">Principal</p>
@@ -314,7 +346,7 @@ const Home = () => {
               className="relative"
             >
               <img
-                src={principal}
+                src={welcomeImage || principal}
                 alt="Principal"
                 className="w-full max-w-md mx-auto rounded-lg shadow-xl"
               />

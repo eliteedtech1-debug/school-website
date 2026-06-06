@@ -14,22 +14,27 @@ import image9 from "../assets/image copy 9.png";
 import image10 from "../assets/image copy 10.png";
 import image12 from "../assets/image copy 12.png";
 import { motion } from "framer-motion";
+import { useWebsiteContent } from "../lib/useWebsiteContent";
 
 const Gallery = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [activeVideo, setActiveVideo] = useState(null);
   const [activeeVideo, setActiveeVideo] = useState(null);
   const [activeImage, setActiveImage] = useState(null);
+  const { getMedia, getSection } = useWebsiteContent();
 
-  const categories = [
-    { id: "all", name: "All" },
-    { id: "photos", name: "Photos" },
-    { id: "videos", name: "Videos" },
-    { id: "events", name: "Events" },
-    { id: "facilities", name: "Facilities" },
-  ];
+  // Inject API gallery images at the front, then fallback to static ones
+  const apiImages = getMedia('gallery');
+  const apiGalleryItems = apiImages.map((m, i) => ({
+    id: `api_${i}`,
+    title: m.caption || `Photo ${i + 1}`,
+    category: "photos",
+    type: "image",
+    image: m.url,
+    description: m.caption || "",
+  }));
 
-  const galleryItems = [
+  const staticGalleryItems = [
     {
       id: 1,
       title: "Students in the Classroom",
@@ -162,6 +167,19 @@ const Gallery = () => {
       image: image12,
       description: "At quiz competition",
     },
+  ];
+
+  // API images prepended; fall back to static if API returns none
+  const galleryItems = apiImages.length > 0
+    ? [...apiGalleryItems, ...staticGalleryItems.filter(i => i.type !== "image")]
+    : staticGalleryItems;
+
+  const categories = [
+    { id: "all", name: "All" },
+    { id: "photos", name: "Photos" },
+    { id: "videos", name: "Videos" },
+    { id: "events", name: "Events" },
+    { id: "facilities", name: "Facilities" },
   ];
 
   const eventsVideos = [

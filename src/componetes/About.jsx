@@ -15,12 +15,17 @@ import teacher from "../assets/teacher.png";
 import officer2 from "../assets/officer2.png";
 import imge from "../assets/image.png";
 import CountUp from "../componetes/layout/CountUp";
+import { useWebsiteContent } from "../lib/useWebsiteContent";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import StaffCarousel from "../componetes/StaffCarousel";
 import ChairmanMessage from "./ChairmanMessage";
 import VisionMission from "./VisionMission";
 const About = () => {
+  const { getSection, getParagraphs, getMedia } = useWebsiteContent();
+  const aboutParagraphs = getParagraphs('about');
+  const aboutImage = getMedia('about')[0]?.url || null;
+
   const stats = [
     {
       icon: <FiUsers />,
@@ -210,11 +215,10 @@ const About = () => {
       <section className="py-20 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-4xl font-semibold">
-            <h1 className="mb-6">About Our School</h1>
+            <h1 className="mb-6">{getSection('about')?.title || 'About Our School'}</h1>
           </div>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-5xl mx-auto">
-            We are committed to nurturing the mind, body, and spirit of every
-            student through holistic education.
+            {aboutParagraphs[0]?.text || 'We are committed to nurturing the mind, body, and spirit of every student through holistic education.'}
           </p>
           <div className="grid lg:grid-cols-2 gap-12 items-center pt-28 pb-8">
             {/* Left side - Image/Visual */}
@@ -227,7 +231,7 @@ const About = () => {
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                 <img
-                  src={image}
+                  src={aboutImage || image}
                   alt="School Campus"
                   className="w-full h-[500px] object-cover"
                 />
@@ -262,20 +266,26 @@ const About = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <div className="space-y-6 text-gray-700 dark:text-gray-300 pt-">
-                <p className="text-lg leading-relaxed">
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    Dr. Kabiru Gwarzo Academy & Tahfeez
-                  </span>{" "}
-                  is a reputable educational institution committed to nurturing
-                  young minds through quality education, strong moral values,
-                  and academic excellence.
-                </p>
-
-                <p className="text-lg leading-relaxed">
-                  Founded with the vision of building future leaders, our school
-                  provides a balanced and inclusive learning environment where
-                  students grow intellectually, spiritually, and socially.
-                </p>
+                {aboutParagraphs.length > 1
+                  ? aboutParagraphs.slice(1).map(p => (
+                      <p key={p.id} className="text-lg leading-relaxed">{p.text}</p>
+                    ))
+                  : <>
+                      <p className="text-lg leading-relaxed">
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          Dr. Kabiru Gwarzo Academy &amp; Tahfeez
+                        </span>{" "}
+                        is a reputable educational institution committed to nurturing
+                        young minds through quality education, strong moral values,
+                        and academic excellence.
+                      </p>
+                      <p className="text-lg leading-relaxed">
+                        Founded with the vision of building future leaders, our school
+                        provides a balanced and inclusive learning environment where
+                        students grow intellectually, spiritually, and socially.
+                      </p>
+                    </>
+                }
 
                 {/* Key Points */}
                 <div className="space-y-4 my-8">
