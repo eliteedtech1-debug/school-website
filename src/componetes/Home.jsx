@@ -9,9 +9,11 @@ import {
   FiTarget,
   FiHeart,
   FiStar,
+  FiZap,
 } from "react-icons/fi";
-import { FaGraduationCap, FaPray } from "react-icons/fa";
+import { FaGraduationCap, FaPray, FaHandsHelping } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import SEO from "../components/SEO";
 import logo from "../assets/school.png";
 import image3 from "../assets/image copy 3.png";
 import image4 from "../assets/image copy 4.png";
@@ -21,6 +23,30 @@ import { useState, useEffect } from "react";
 import StoryScreen from "./StoryScreen";
 import CountUp from "./layout/CountUp";
 import { useWebsiteContent } from "../lib/useWebsiteContent";
+import ApplyModal from "./ApplyModal";
+import { Skeleton, CardSkeleton, TextSkeleton, StatSkeleton } from "../components/Skeleton";
+
+const iconMap = {
+  'target': FiTarget,
+  'heart': FiHeart,
+  'star': FiStar,
+  'book': FiBookOpen,
+  'users': FiUsers,
+  'award': FiAward,
+  'graduation': FaGraduationCap,
+  'pray': FaPray,
+  'zap': FiZap,
+  'hands-helping': FaHandsHelping,
+  'book-open': FiBookOpen,
+};
+
+const eventColorMap = {
+  'blue': 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800',
+  'green': 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
+  'purple': 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800',
+  'yellow': 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
+  'red': 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
+};
 
 const fadeUp = {
   hidden: { opacity: 0, y: 60 },
@@ -43,7 +69,8 @@ const staggerContainer = {
 const images = [image3, image4, image5];
 const Home = () => {
   const [index, setIndex] = useState(0);
-  const { getSection, getParagraphs, getMedia, meta } = useWebsiteContent();
+  const [applyOpen, setApplyOpen] = useState(false);
+  const { getSection, getParagraphs, getMedia, meta, loading } = useWebsiteContent();
 
   const schoolName = meta?.school_name || "Our School";
   const tagline    = meta?.tagline || "";
@@ -58,6 +85,30 @@ const Home = () => {
   const welcomeParagraphs = getParagraphs('welcome');
   const welcomeImage   = getMedia('welcome')[0]?.url || null;
 
+  // Parse structured data from CMS sections (JSON in paragraph text)
+  const parseStructured = (key) => {
+    const section = getSection(key);
+    if (!section) return [];
+    const paragraphs = typeof section.paragraphs === 'string'
+      ? JSON.parse(section.paragraphs)
+      : (section.paragraphs || []);
+    return paragraphs.map(p => {
+      try { return { ...JSON.parse(p.text), _id: p.id }; }
+      catch { return null; }
+    }).filter(Boolean);
+  };
+
+  const resolveIcon = (iconName) => {
+    const Icon = iconMap[iconName?.toLowerCase()] || FiTarget;
+    return <Icon className="w-8 h-8" />;
+  };
+
+  const cmsCoreValues = parseStructured('core_values');
+  const cmsFeatures = parseStructured('features');
+  const cmsPrograms = parseStructured('programs');
+  const cmsEvents = parseStructured('events');
+  const cmsProgramsSection = getSection('programs');
+
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % carouselImages.length);
@@ -65,80 +116,42 @@ const Home = () => {
     return () => clearInterval(interval);
   }, [carouselImages.length]);
 
-  const features = [
-    {
-      icon: <FiBookOpen className="w-8 h-8" />,
-      title: "Quality Education",
-      description:
-        "Pre-Nursery to SS3 with Science, Arts & Commercial streams plus comprehensive Islamic studies",
-    },
-    {
-      icon: <FiUsers className="w-8 h-8" />,
-      title: "Islamic Studies & Tahfeez",
-      description:
-        "Complete Islamiyya and Tahfeez programs integrated with modern curriculum",
-    },
-    {
-      icon: <FiAward className="w-8 h-8" />,
-      title: "Excellence & Innovation",
-      description:
-        "QR ID cards, e-Form registrations, and commitment to academic excellence",
-    },
-  ];
+  // Dynamic data from CMS (with hardcoded fallbacks)
+  const features = cmsFeatures.length > 0
+    ? cmsFeatures.map(f => ({
+        icon: resolveIcon(f.icon),
+        title: f.title,
+        description: f.description,
+      }))
+    : [
+        { icon: <FiBookOpen className="w-8 h-8" />, title: "Quality Education", description: "Pre-Nursery to SS3 with Science, Arts & Commercial streams plus comprehensive Islamic studies" },
+        { icon: <FiUsers className="w-8 h-8" />, title: "Islamic Studies & Tahfeez", description: "Complete Islamiyya and Tahfeez programs integrated with modern curriculum" },
+        { icon: <FiAward className="w-8 h-8" />, title: "Excellence & Innovation", description: "QR ID cards, e-Form registrations, and commitment to academic excellence" },
+      ];
 
-  const programs = [
-    {
-      level: "Pre-Nursery",
-      grades: "1-2",
-      time: "Mon-Thu: 7:30am-12:30pm,Fri: 7:30am-12:00pm",
-    },
-    {
-      level: "Primary",
-      grades: "1-5",
-      time: "Mon-Thu: 7:30am-1:15pm, Fri: 7:30am-12:00pm",
-    },
-    {
-      level: "Junior Secondary",
-      grades: "JSS 1-3",
-      time: "Mon-Thu: 7:30am-1:15pm, Fri: 7:30am-12:00pm",
-    },
-    {
-      level: "Senior Secondary",
-      grades: "SS 1-3 (Science, Arts, Commercial)",
-      time: "Mon-Thu: 7:30am-1:15pm, Fri: 7:30am-12:00pm",
-    },
-    {
-      level: "Islamiyya",
-      grades: "All Levels",
-      time: "Mon-Thu: 2:30pm-5:00pm",
-    },
-    { level: "Tahfeez", grades: "All Levels", time: "Mon-Thu: 9:00am-5:00pm" },
-  ];
+  const programs = cmsPrograms.length > 0
+    ? cmsPrograms
+    : [
+        { level: "Pre-Nursery", grades: "1-2", time: "Mon-Thu: 7:30am-12:30pm,Fri: 7:30am-12:00pm" },
+        { level: "Primary", grades: "1-5", time: "Mon-Thu: 7:30am-1:15pm, Fri: 7:30am-12:00pm" },
+        { level: "Junior Secondary", grades: "JSS 1-3", time: "Mon-Thu: 7:30am-1:15pm, Fri: 7:30am-12:00pm" },
+        { level: "Senior Secondary", grades: "SS 1-3 (Science, Arts, Commercial)", time: "Mon-Thu: 7:30am-1:15pm, Fri: 7:30am-12:00pm" },
+        { level: "Islamiyya", grades: "All Levels", time: "Mon-Thu: 2:30pm-5:00pm" },
+        { level: "Tahfeez", grades: "All Levels", time: "Mon-Thu: 9:00am-5:00pm" },
+      ];
 
-  const currentEvents = [
-    {
-      title: "2025/2026 Session e-Application Form",
-      status: "NOW ON SALE!",
-      description:
-        "Get your application form for the upcoming academic session",
-      color:
-        "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800",
-    },
-    {
-      title: "2024/2025 Session Registration",
-      status: "ONGOING",
-      description: "Registration for current session is still ongoing",
-      color:
-        "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800",
-    },
-    {
-      title: "Employment Opportunities",
-      status: "AVAILABLE",
-      description: "Academic Staff, NYSC Corps Members and IT Students needed",
-      color:
-        "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800",
-    },
-  ];
+  const currentEvents = cmsEvents.length > 0
+    ? cmsEvents.map(e => ({
+        title: e.title,
+        status: e.status,
+        description: e.description,
+        color: eventColorMap[e.color] || eventColorMap.blue,
+      }))
+    : [
+        { title: "2025/2026 Session e-Application Form", status: "NOW ON SALE!", description: "Get your application form for the upcoming academic session", color: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800" },
+        { title: "2024/2025 Session Registration", status: "ONGOING", description: "Registration for current session is still ongoing", color: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800" },
+        { title: "Employment Opportunities", status: "AVAILABLE", description: "Academic Staff, NYSC Corps Members and IT Students needed", color: "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800" },
+      ];
 
   const stats = [
     {
@@ -188,28 +201,52 @@ const Home = () => {
     },
   ];
 
-  const coreValues = [
-    {
-      icon: <FiTarget className="w-8 h-8" />,
-      title: "Excellence",
-      description: "Striving for the highest standards in education and character development",
-    },
-    {
-      icon: <FiHeart className="w-8 h-8" />,
-      title: "Islamic Values",
-      description: "Integrating Islamic principles with modern education for holistic development",
-    },
-    {
-      icon: <FiStar className="w-8 h-8" />,
-      title: "Innovation",
-      description: "Embracing technology and modern teaching methods for effective learning",
-    },
-  ];
+  const coreValues = cmsCoreValues.length > 0
+    ? cmsCoreValues.map(v => ({
+        icon: resolveIcon(v.icon),
+        title: v.title,
+        description: v.description,
+      }))
+    : [
+        { icon: <FiTarget className="w-8 h-8" />, title: "Excellence", description: "Striving for the highest standards in education and character development" },
+        { icon: <FiHeart className="w-8 h-8" />, title: "Islamic Values", description: "Integrating Islamic principles with modern education for holistic development" },
+        { icon: <FiStar className="w-8 h-8" />, title: "Innovation", description: "Embracing technology and modern teaching methods for effective learning" },
+      ];
 
   return (
+    <>
+      <SEO
+        title="Home"
+        description="Dr. Kabiru Gwarzo Academy — Excellence in Education. A premier secondary school in Kano offering quality academics, Islamiyyah, and Tahfeez programs."
+        keywords="Dr. Kabiru Gwarzo Academy, Kano school, secondary school, Islamiyyah, Tahfeez, Quran memorization, Nigeria education"
+        canonicalPath="/"
+        jsonld={{
+          '@context': 'https://schema.org',
+          '@type': 'EducationalOrganization',
+          name: 'Dr. Kabiru Gwarzo Academy',
+          url: 'https://kirmaskngovschools.com',
+          logo: 'https://kirmaskngovschools.com/school.png',
+          description: 'Premier secondary school in Kano offering quality academics, Islamiyyah, and Tahfeez programs.',
+          address: { '@type': 'PostalAddress', addressLocality: 'Kano', addressCountry: 'NG' },
+        }}
+      />
     <div className="pt-20">
       {/* Hero Section */}
-      <section className="relative w-full overflow-hidden ">
+      <section className="relative w-full overflow-hidden">
+        {loading && heroImages.length === 0 ? (
+          <div className="w-full h-screen bg-gray-900 flex items-center justify-center">
+            <div className="text-center px-4 animate-pulse">
+              <Skeleton className="w-28 h-28 mx-auto mb-6 rounded-xl" />
+              <Skeleton className="h-10 w-96 mx-auto mb-4" />
+              <Skeleton className="h-6 w-64 mx-auto mb-3" />
+              <Skeleton className="h-4 w-48 mx-auto mb-8" />
+              <div className="flex gap-4 justify-center">
+                <Skeleton className="h-12 w-36 rounded-xl" />
+                <Skeleton className="h-12 w-36 rounded-xl" />
+              </div>
+            </div>
+          </div>
+        ) : (
         <motion.div
           id="gallery"
           className="relative w-full h-screen overflow-hidden text-white"
@@ -262,7 +299,7 @@ const Home = () => {
 
               {(heroParagraphs[0] || tagline) && (
                 <p className="text-xl md:text-2xl mb-6 text-yellow-400 font-semibold">
-                  {heroParagraphs[0] || tagline}
+                  {heroParagraphs[0]?.text || tagline}
                 </p>
               )}
 
@@ -274,12 +311,12 @@ const Home = () => {
               )}
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/apply"
+            <button
+              onClick={() => setApplyOpen(true)}
               className="bg-yellow-400  text-blue-950 px-8 py-3 rounded-xl font-bold hover:from-yellow-400 hover:to-yellow-400 transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl transform hover:scale-105"
             >
               Apply Now <FiArrowRight />
-            </Link>
+            </button>
             <Link
               to="/about"
               className="border-2 border-yellow-400 text-yellow-400 px-4 py-3 rounded-xl font-semibold hover:bg-yellow-400 hover:text-blue-950 transition-all duration-300 backdrop-blur-sm bg-white/10 shadow-xl"
@@ -307,11 +344,22 @@ const Home = () => {
             ❯
           </button>
         </motion.div>
+        )}
       </section>
 
       {/* Principal's Welcome */}
       <section className="py-16 bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4">
+          {loading && !getSection('welcome') ? (
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-64 mb-6" />
+                <TextSkeleton lines={4} />
+                <Skeleton className="h-4 w-40 mt-4" />
+              </div>
+              <Skeleton className="w-full max-w-md mx-auto aspect-[4/5] rounded-lg" />
+            </div>
+          ) : (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -355,6 +403,7 @@ const Home = () => {
               </div>
             </motion.div>
           </motion.div>
+          )}
         </div>
       </section>
 
@@ -466,6 +515,9 @@ const Home = () => {
             <p className="text-gray-600 dark:text-gray-400">The principles that guide our educational philosophy</p>
           </motion.div>
           
+          {loading && cmsCoreValues.length === 0 ? (
+            <CardSkeleton count={3} cols={3} />
+          ) : (
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -488,15 +540,26 @@ const Home = () => {
               </motion.div>
             ))}
           </motion.div>
+          )}
         </div>
       </section>
-      {/*<Gallery />*/} 
 
       {/* Events */}
       <section className="py-16 bg-gray-50 dark:bg-gray-900">
         <h2 className="text-3xl font-bold text-center mb-12">
           Upcoming Events
         </h2>
+        {loading && cmsEvents.length === 0 ? (
+          <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-6 px-4">
+            {[1,2,3].map(i => (
+              <div key={i} className="p-6 rounded-lg border-2 border-gray-200 dark:border-gray-700">
+                <Skeleton className="h-4 w-28 mb-3" />
+                <Skeleton className="h-5 w-full mb-2" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            ))}
+          </div>
+        ) : (
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -516,12 +579,24 @@ const Home = () => {
             </motion.div>
           ))}
         </motion.div>
+        )}
       </section>
-       {/* <Events /> */}
 
       {/* Features */}
       <section className="py-16 bg-white dark:bg-gray-950">
         <h2 className="text-3xl font-bold text-center mb-12">Why Choose Us?</h2>
+        {loading && cmsFeatures.length === 0 ? (
+          <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 px-4">
+            {[1,2,3].map(i => (
+              <div key={i} className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
+                <Skeleton className="w-16 h-16 mx-auto rounded-full mb-4" />
+                <Skeleton className="h-5 w-3/4 mx-auto mb-2" />
+                <Skeleton className="h-4 w-full mb-1" />
+                <Skeleton className="h-4 w-5/6 mx-auto" />
+              </div>
+            ))}
+          </div>
+        ) : (
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -544,10 +619,25 @@ const Home = () => {
             </motion.div>
           ))}
         </motion.div>
+        )}
       </section>
 
       <section className="py-16 bg-gray-50 dark:bg-gray-900">
-        <h2 className="text-3xl font-bold text-center mb-12">Our Programs</h2>
+        <h2 className="text-3xl font-bold text-center mb-12">{cmsProgramsSection?.title || 'Our Programs'}</h2>
+        {loading && cmsPrograms.length === 0 ? (
+          <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-6 px-4">
+            {[1,2,3].map(i => (
+              <div key={i} className="bg-white dark:bg-gray-800 p-6 rounded-lg border-l-4 border-gray-300 dark:border-gray-600">
+                <Skeleton className="h-5 w-40 mb-2" />
+                <Skeleton className="h-4 w-32 mb-2" />
+                <div className="flex gap-2 mt-2">
+                  <Skeleton className="h-4 w-4" />
+                  <Skeleton className="h-4 w-48" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-6 px-4">
           {programs.map((p, i) => (
             <motion.div
@@ -567,8 +657,11 @@ const Home = () => {
             </motion.div>
           ))}
         </div>
+        )}
       </section>
-    </div>
+
+      {applyOpen && <ApplyModal onClose={() => setApplyOpen(false)} />}
+    </div></>
   );
 };
 

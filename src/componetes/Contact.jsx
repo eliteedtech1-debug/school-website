@@ -1,5 +1,6 @@
 import { FiMapPin, FiPhone, FiMail, FiClock } from "react-icons/fi";
 import { motion } from "framer-motion";
+import SEO from "../components/SEO";
 import { useWebsiteContent } from "../lib/useWebsiteContent";
 
 const Contact = () => {
@@ -12,6 +13,13 @@ const Contact = () => {
   const schoolName = meta?.school_name || "Our School";
 
   return (
+    <>
+      <SEO
+        title="Contact Us"
+        description="Get in touch with Dr. Kabiru Gwarzo Academy. Find our address, phone numbers, email, and operating hours. We're here to help with admissions and inquiries."
+        keywords="contact Dr Kabiru Gwarzo Academy, Kano school address, school phone number, school email, admissions contact"
+        canonicalPath="/contact"
+      />
     <div className="pt-16 bg-gray-50 dark:bg-gray-950 min-h-screen">
       <motion.section
         initial={{ opacity: 0, y: 40 }}
@@ -23,7 +31,7 @@ const Contact = () => {
         <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-yellow-300/10 rounded-full blur-3xl" />
         <h1 className="text-4xl md:text-5xl font-extrabold text-yellow-400 mb-4">Contact Us</h1>
         <p className="text-lg text-white max-w-2xl mx-auto">
-          {contactParagraphs[0] || `We'd love to hear from you. Reach out to ${schoolName} anytime.`}
+          {contactParagraphs[0]?.text || `We'd love to hear from you. Reach out to ${schoolName} anytime.`}
         </p>
       </motion.section>
 
@@ -56,7 +64,7 @@ const Contact = () => {
           </motion.div>
         </div>
       </section>
-    </div>
+    </div></>
   );
 };
 

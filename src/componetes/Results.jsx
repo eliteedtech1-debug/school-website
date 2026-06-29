@@ -1,73 +1,248 @@
-import { useState } from 'react';
-import { FiSearch, FiDownload } from 'react-icons/fi';
+import { useMemo, useState } from 'react';
+import { FiSearch, FiAlertCircle, FiCheckCircle, FiDownload } from 'react-icons/fi';
 import { motion } from 'framer-motion';
+import { pdf } from '@react-pdf/renderer';
+import SEO from "../components/SEO";
+import EndOfTermReportTemplate from '@elscholar-ui/feature-module/academic/examinations/exam-results/EndOfTermReportTemplate';
+
+const API_URL = import.meta.env.VITE_API_URL || '';
+const WEBSITE_TOKEN = import.meta.env.VITE_WEBSITE_TOKEN || '';
+const AUTH_HEADER = WEBSITE_TOKEN ? { Authorization: `Bearer ${WEBSITE_TOKEN}` } : {};
+
+const TERMS = ['First Term', 'Second Term', 'Third Term'];
+
+const GRADE_BOUNDARIES = [
+  { grade: 'A', min: 80, max: 100, remark: 'Excellent' },
+  { grade: 'B+', min: 70, max: 79, remark: 'Very Good' },
+  { grade: 'B', min: 60, max: 69, remark: 'Good' },
+  { grade: 'C+', min: 50, max: 59, remark: 'Credit' },
+  { grade: 'C', min: 40, max: 49, remark: 'Pass' },
+  { grade: 'D', min: 30, max: 39, remark: 'Fair' },
+  { grade: 'F', min: 0, max: 29, remark: 'Fail' },
+];
+
+const getGrade = (score) => {
+  if (score == null) return { grade: '-', remark: '-' };
+  const found = GRADE_BOUNDARIES.find(b => score >= b.min && score <= b.max);
+  return found ? { grade: found.grade, remark: found.remark } : { grade: '-', remark: '-' };
+};
+
+const getCurrentTerm = () => {
+  const month = new Date().getMonth();
+  if (month >= 8) return 'First Term';
+  if (month >= 4) return 'Second Term';
+  return 'Third Term';
+};
+
+const generateYearTerms = () => {
+  const year = new Date().getFullYear();
+  const month = new Date().getMonth();
+  const startYear = month >= 8 ? year : year - 1;
+  const items = [];
+  for (let i = -1; i <= 1; i++) {
+    const sy = startYear + i;
+    for (const term of TERMS) {
+      items.push({ term, academicYear: `${sy}/${sy + 1}`, label: `${term} (${sy}/${sy + 1})`, value: `${term}|${sy}/${sy + 1}` });
+    }
+  }
+  return items;
+};
+
 const Results = () => {
-  const [searchData, setSearchData] = useState({
-    studentId: '',
-    examType: ''
-  });
+  const [studentId, setStudentId] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState(null);
+  const [error, setError] = useState('');
 
-  const handleSearch = (e) => {
+  const yearTerms = useMemo(() => generateYearTerms(), []);
+  const defaultTerm = useMemo(() => {
+    const t = getCurrentTerm();
+    const month = new Date().getMonth();
+    const year = new Date().getFullYear();
+    const sy = month >= 8 ? year : year - 1;
+    return `${t}|${sy}/${sy + 1}`;
+  }, []);
+
+  const handleSearch = async (e) => {
     e.preventDefault();
-    alert('Results will be displayed here');
-  };
-   const fadeUp = {
-    hidden: { opacity: 0, y: 60 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.7 } },
+    if (!studentId.trim()) return;
+    setLoading(true);
+    setError('');
+    setResults(null);
+    const [term, academicYear] = (selectedTerm || defaultTerm).split('|');
+    try {
+      const res = await fetch(`${API_URL}/public/student-report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...AUTH_HEADER },
+        body: JSON.stringify({
+          admission_no: studentId.trim(),
+          academic_year: academicYear,
+          term,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.data && data.data.length > 0) {
+        setResults({ rows: data.data, caConfiguration: data.caConfiguration, studentRemarks: data.studentRemarks });
+      } else {
+        setError(data.error || 'No results found for this student');
+      }
+    } catch {
+      setError('Unable to connect. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const stagger = {
-    hidden: {},
-    visible: { transition: { staggerChildren: 0.2 } },
+  const handleDownloadPDF = async () => {
+    console.log('📥 PDF download clicked');
+    if (!results) { console.log('no results'); return; }
+    console.log('rows:', results.rows.length, 'first:', results.rows[0]);
+    try {
+    const first = results.rows[0];
+    console.log('building PDF...');
+    const termLabel = first?.term || '';
+    const academicYear = first?.academic_year || '';
+    const subjects = results.rows.map(r => {
+      const computed = getGrade(r.total_score);
+      return {
+        subject: r.subject,
+        subject_code: r.subject_code,
+        ca1_score: r.ca1_score,
+        ca2_score: r.ca2_score,
+        ca3_score: r.ca3_score,
+        exam_score: r.exam_score,
+        total_score: r.total_score,
+        percentage: r.percentage,
+        grade: r.grade || computed.grade,
+        remark: r.remark || computed.remark,
+        term: r.term,
+        academic_year: r.academic_year,
+        subject_class_average: null,
+        subject_position: r.subject_position,
+      };
+    });
+    const totalScore = subjects.reduce((s, r) => s + (r.total_score || 0), 0);
+    const finalAvg = subjects.length > 0 ? +(totalScore / subjects.length).toFixed(1) : null;
+    const remarks = results.studentRemarks?.[first?.admission_no] || {};
+    const reportData = {
+      subjects,
+      principal_signature: null,
+      total_score: totalScore,
+      final_average: finalAvg,
+    };
+    const studentData = {
+      student_name: first?.student_name || 'Student',
+      admission_no: first?.admission_no || '',
+      class_name: first?.class_name || '',
+    };
+    const schoolInfo = {
+      school_name: import.meta.env.VITE_SCHOOL_NAME || 'School Name',
+      badge_url: null,
+      school_motto: 'Excellence in Education',
+      primary_contact: '',
+      email_address: '',
+      address: '',
+    };
+    const defaultGradeBoundaries = [
+      { grade: 'A', min_percentage: 80, max_percentage: 100, remark: 'Excellent' },
+      { grade: 'B+', min_percentage: 70, max_percentage: 79, remark: 'Very Good' },
+      { grade: 'B', min_percentage: 60, max_percentage: 69, remark: 'Good' },
+      { grade: 'C+', min_percentage: 50, max_percentage: 59, remark: 'Credit' },
+      { grade: 'C', min_percentage: 40, max_percentage: 49, remark: 'Pass' },
+      { grade: 'D', min_percentage: 30, max_percentage: 39, remark: 'Fair' },
+      { grade: 'F', min_percentage: 0, max_percentage: 29, remark: 'Fail' },
+    ];
+    const reportConfig = {
+      visibility: {
+        showPosition: false,
+        showSubjectPosition: false,
+        showOutOf: false,
+        showClassAverage: false,
+        showGradeDetails: true,
+        showSubjectAverage: false,
+        showRemark: true,
+        showStudentPhoto: false,
+        showHighestLowestAvg: false,
+        showFormTeacher: true,
+        showTeacherRemarks: true,
+        showPrincipalRemarks: true,
+        showNextTerm: false,
+        showAttendancePerformance: false,
+        showAttendanceStats: false,
+        showAttendanceRate: false,
+        showAttendanceDetails: false,
+        showCharacterAssessment: false,
+        showPersonalDevEmptyRows: false,
+        showSchoolLogo: true,
+        showSchoolContactDetails: false,
+        showNoInClass: false,
+        showClassPosition: false,
+        showFinalAverage: true,
+      },
+    };
+    console.log('rendering template with', subjects.length, 'subjects');
+    const blob = await pdf(
+      <EndOfTermReportTemplate
+        reportData={reportData}
+        studentData={studentData}
+        academicYear={academicYear}
+        term={termLabel}
+        assessmentType="EXAM"
+        school={schoolInfo}
+        selected_branch={null}
+        gradeBoundaries={defaultGradeBoundaries}
+        characterScores={[]}
+        expectedTraits={[]}
+        formTeacherData={{ teacher_remark: remarks.teacher_remark, principal_remark: remarks.principal_remark }}
+        schoolSettings={{}}
+        caConfiguration={results.caConfiguration || []}
+        reportConfig={reportConfig}
+        examRemarks={[]}
+      />
+    ).toBlob();
+    console.log('PDF blob generated, size:', blob?.size);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `result_${studentData.student_name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      setError('Failed to generate PDF: ' + err.message);
+    }
   };
+
   return (
+    <>
+      <SEO
+        title="Results Checker"
+        description="Check your examination results for Dr. Kabiru Gwarzo Academy. Enter your student ID to view and download your end-of-term results."
+        keywords="exam results, check results, student results, Dr Kabiru Gwarzo Academy results, school results checker"
+        canonicalPath="/results"
+      />
     <div className="pt-16">
-        {/* <motion.section
-        initial="hidden"
-        animate="visible"
-        variants={fadeUp}
-        className="relative text-black dark:text-white py-24 text-center overflow-hidden"
+      {/* Hero */}
+      <motion.section
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+        className="relative overflow-hidden py-28 text-center bg-gradient-to-b from-blue-950 via-blue-800 to-blue-950 text-white"
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-          <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-r from-blue-800 to-transparent dark:from-blue-800 transform -skew-y-3"></div>
-          <div className="absolute bottom-0 right-0 w-full h-20 bg-gradient-to-l from-yellow-400 to-transparent dark:from-yellow-300 transform skew-y-3"></div>
-
-          <div className="hidden md:flex absolute top-1/4 left-1/4 w-16 h-16 border border-blue-950 dark:border-white rounded-full animate-float"></div>
-          <div
-            className="hidden md:flex absolute bottom-1/4 right-1/4 w-12 h-12 border border-blue-950 dark:border-white rotate-45 animate-float"
-            style={{ animationDelay: "1s" }}
-          ></div>
+        <div className="absolute -top-32 -left-32 w-80 h-80 bg-yellow-400/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-yellow-300/10 rounded-full blur-3xl" />
+        <div className="relative z-10 max-w-4xl mx-auto px-6">
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-6 text-yellow-400">
+            Results Checker
+          </h1>
+          <p className="text-lg md:text-xl text-blue-100">
+            Check your examination results securely
+          </p>
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 ">Results Checker</h1>
-          <p className="text-xl text-black dark:text-white">Check and download your examination results</p>
-        </div>
-      </motion.section> */}
-     <motion.section
-  initial={{ opacity: 0, y: 40 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.8, ease: "easeOut" }}
-  className="relative overflow-hidden py-28 text-center
-             bg-gradient-to-b from-blue-950 via-blue-800 to-blue-950
-             text-white"
->
-  {/* توهجات ذهبية */}
-  <div className="absolute -top-32 -left-32 w-80 h-80 bg-yellow-400/20 rounded-full blur-3xl" />
-  <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-yellow-300/10 rounded-full blur-3xl" />
+      </motion.section>
 
-
-  {/* المحتوى */}
-  <div className="relative z-10 max-w-4xl mx-auto px-6">
-    <h1 className="text-4xl md:text-5xl font-extrabold mb-6 text-yellow-400">
-      Results Checker
-    </h1>
-
-    <p className="text-lg md:text-xl text-blue-100">
-      Check and download your examination results securely
-    </p>
-  </div>
-</motion.section>
-
+      {/* Search Form */}
       <section className="py-16 bg-white dark:bg-gray-950">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <form onSubmit={handleSearch} className="space-y-6">
@@ -78,37 +253,125 @@ const Results = () => {
                 required
                 placeholder="Enter your student ID"
                 className="w-full px-4 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
-                value={searchData.studentId}
-                onChange={(e) => setSearchData({...searchData, studentId: e.target.value})}
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Exam Type</label>
+              <label className="block text-sm font-medium mb-2">Term</label>
               <select
-                required
-                className="w-full px-4 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
-                value={searchData.examType}
-                onChange={(e) => setSearchData({...searchData, examType: e.target.value})}
+                className="w-full px-4 py-3 border rounded-lg dark:bg-gray-900 dark:border-gray-700 text-base"
+                value={selectedTerm}
+                onChange={(e) => setSelectedTerm(e.target.value)}
               >
-                <option value="">Select Exam Type</option>
-                <option value="first-term">First Term</option>
-                <option value="second-term">Second Term</option>
-                <option value="third-term">Third Term</option>
-                <option value="mock">Mock Exam</option>
+                {yearTerms.map((yt) => (
+                  <option key={yt.value} value={yt.value}>{yt.label}</option>
+                ))}
               </select>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-950 dark:bg-yellow-400 dark:text-blue-950 text-white py-3 rounded-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full bg-blue-950 dark:bg-yellow-400 dark:text-blue-950 text-white py-3 rounded-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              <FiSearch /> Check Results
+              <FiSearch /> {loading ? 'Searching...' : 'Check Results'}
             </button>
           </form>
         </div>
       </section>
-    </div>
+
+      {/* Error */}
+      {error && (
+        <section className="pb-16 bg-white dark:bg-gray-950">
+          <div className="max-w-2xl mx-auto px-4">
+            <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+              <FiAlertCircle className="shrink-0" size={20} />
+              <p>{error}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Results */}
+      {results && results.rows && results.rows.length > 0 && (
+        <section className="pb-16 bg-white dark:bg-gray-950">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold">
+                  <FiCheckCircle className="inline text-green-500 me-2" />
+                  Results Found ({results.rows.length})
+                </h2>
+                <button
+                  onClick={handleDownloadPDF}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-950 text-white text-xs rounded-lg hover:bg-blue-800 transition-colors"
+                >
+                  <FiDownload size={14} /> PDF
+                </button>
+              </div>
+              <div className="text-sm text-gray-500">
+                Student: <span className="font-semibold">{results.rows[0]?.student_name || studentId}</span>
+                {results.rows[0]?.class_name && <span className="ms-2">| Class: {results.rows[0].class_name}</span>}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border dark:border-gray-700">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-semibold">Subject</th>
+                      <th className="px-4 py-3 text-center font-semibold">CA1</th>
+                      <th className="px-4 py-3 text-center font-semibold">CA2</th>
+                      <th className="px-4 py-3 text-center font-semibold">Exam</th>
+                      <th className="px-4 py-3 text-center font-semibold">Total</th>
+                      <th className="px-4 py-3 text-center font-semibold">Grade</th>
+                      <th className="px-4 py-3 text-center font-semibold">Remark</th>
+                      <th className="px-4 py-3 text-center font-semibold">Term</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y dark:divide-gray-700">
+                    {results.rows.map((r, i) => (
+                      <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td className="px-4 py-3 font-medium">{r.subject || '-'}</td>
+                        <td className="px-4 py-3 text-center">{r.ca1_score ?? '-'}</td>
+                        <td className="px-4 py-3 text-center">{r.ca2_score ?? '-'}</td>
+                        <td className="px-4 py-3 text-center">{r.exam_score ?? '-'}</td>
+                      <td className="px-4 py-3 text-center font-semibold">{r.total_score ?? '-'}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${
+                          ((r.grade || getGrade(r.total_score).grade).toUpperCase()) === 'A' ? 'bg-green-100 text-green-700' :
+                          ((r.grade || getGrade(r.total_score).grade).toUpperCase()) === 'B' ? 'bg-blue-100 text-blue-700' :
+                          ((r.grade || getGrade(r.total_score).grade).toUpperCase()) === 'C' ? 'bg-yellow-100 text-yellow-700' :
+                          ((r.grade || getGrade(r.total_score).grade).toUpperCase()) === 'D' ? 'bg-orange-100 text-orange-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>{r.grade || getGrade(r.total_score).grade}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{r.remark || getGrade(r.total_score).remark || '-'}</td>
+                      <td className="px-4 py-3 text-center text-gray-500">{r.term || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Summary */}
+            {(() => {
+              const avg = results.rows.length > 0
+                ? (results.rows.reduce((s, r) => s + (r.total_score || 0), 0) / results.rows.length).toFixed(1)
+                : null;
+              return avg !== null && (
+                <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg flex flex-wrap gap-6 text-sm">
+                  <div><span className="text-gray-500">Average Score:</span> <strong>{avg}</strong></div>
+                  <div><span className="text-gray-500">Subjects:</span> <strong>{results.rows.length}</strong></div>
+                </div>
+              );
+            })()}
+          </div>
+        </section>
+      )}
+    </div></>
   );
 };
 

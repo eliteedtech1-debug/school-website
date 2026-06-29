@@ -4,9 +4,11 @@ import { HiMenu, HiX } from "react-icons/hi";
 import { useLocation } from "react-router-dom";
 import logo from "../../assets/school.png";
 import DarkModeToggle from "./DarkModeToggle";
+import ApplyModal from "../ApplyModal";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [applyOpen, setApplyOpen] = useState(false);
   const location = useLocation();
 
   return (
@@ -54,16 +56,16 @@ export default function Navbar() {
             </Link>
           </li>
           <li>
-            <Link
+            <button
+              onClick={() => setApplyOpen(true)}
               className={
                 location.pathname === "/apply"
                   ? "text-black dark:text-yellow-400 font-semibold underline underline-offset-8 dark:decoration-yellow-400 decoration-blue-950 drop-shadow"
                   : "text-black dark:text-gray-50/90 font-bold hover:text-blue-950 transition"
               }
-              to="/apply"
             >
               Apply
-            </Link>
+            </button>
           </li>
           <li>
             <Link
@@ -93,12 +95,22 @@ export default function Navbar() {
         </ul>
        <div className='gap-4 hidden lg:flex'>
            <DarkModeToggle />
-                 <Link
-          to="/apply"
+                 <button
+          onClick={() => setApplyOpen(true)}
           className=" bg-blue-950 dark:bg-yellow-400 dark:text-blue-950 font-semibold text-white dark:hover:text-blue-950 px-5 py-2 rounded-xl  dark:hover:bg-yellow-100  hover:bg-yellow-100 hover:text-blue-950 transition"
         >
           Apply Now
-        </Link>
+        </button>
+        {import.meta.env.VITE_APP_URL && (
+          <a
+            href={`${import.meta.env.VITE_APP_URL}/login?type=student`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-yellow-400 dark:bg-blue-950 dark:text-yellow-400 text-blue-950 font-semibold px-5 py-2 rounded-xl hover:opacity-90 transition"
+          >
+            Student Portal
+          </a>
+        )}
             
        </div>
        
@@ -163,16 +175,16 @@ export default function Navbar() {
             <li>
                 <DarkModeToggle />
             </li>
-            <Link
-              onClick={() => setOpen(false)}
-              to="/apply"
+            <button
+              onClick={() => { setOpen(false); setApplyOpen(true); }}
               className="bg-blue-950 dark:bg-yellow-400 dark:text-blue-950 font-semibold text-white dark:hover:text-yellow-100 px-6 py-2 rounded-xl"
             >
               Apply Now
-            </Link>
+            </button>
           </ul>
         </div>
       )}
+      {applyOpen && <ApplyModal onClose={() => setApplyOpen(false)} />}
     </nav>
   );
 }

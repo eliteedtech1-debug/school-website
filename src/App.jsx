@@ -24,6 +24,9 @@ import AdminGallery from './admin/pages/Gallery';
 import Events from './admin/pages/Events';
 import Statistics from './admin/pages/Statistics';
 import AdminContact from './admin/pages/Contact';
+import AdminContent from './admin/pages/Content';
+import AdminStories from './admin/pages/Stories';
+import AdminWebsiteData from './admin/pages/WebsiteData';
 import SuperAdminDashboard from './admin/pages/SuperAdminDashboard';
 import Schools from './admin/pages/Schools';
 import Themes from './admin/pages/Themes';
@@ -86,6 +89,9 @@ function App() {
                   <Route path="events" element={<Events />} />
                   <Route path="statistics" element={<Statistics />} />
                   <Route path="contact" element={<AdminContact />} />
+                  <Route path="content" element={<AdminContent />} />
+                  <Route path="stories" element={<AdminStories />} />
+                  <Route path="website-data" element={<AdminWebsiteData />} />
                   
                   {/* Super Admin Routes */}
                   <Route 

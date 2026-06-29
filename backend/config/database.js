@@ -2,7 +2,7 @@ const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'school_cms',
+  process.env.DB_NAME || 'kirmaskngov_skcooly_bachup_db',
   process.env.DB_USER || 'root',
   process.env.DB_PASS || '',
   {

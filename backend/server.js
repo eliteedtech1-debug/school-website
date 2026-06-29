@@ -58,6 +58,10 @@ app.use('/api/achievements', require('./routes/achievements'));
 app.use('/api/statistics', require('./routes/statistics'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/content', require('./routes/content'));
+app.use('/api/stories', require('./routes/stories'));
+app.use('/api/website-content', require('./routes/website-content'));
+app.use('/api/website-sections', require('./routes/website-sections'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

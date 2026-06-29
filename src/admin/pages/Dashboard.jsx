@@ -11,7 +11,8 @@ import {
   FiEye,
   FiPlus,
   FiClock,
-  FiMapPin
+  FiMapPin,
+  FiLayout
 } from 'react-icons/fi';
 import { FaGraduationCap } from 'react-icons/fa';
 import { Link } from 'react-router-dom';

@@ -10,7 +10,10 @@ import {
   FiAward,
   FiMessageSquare, 
   FiLogOut,
-  FiShield
+  FiShield,
+  FiFileText,
+  FiBookOpen,
+  FiGrid
 } from 'react-icons/fi';
 import { FaGraduationCap, FaSchool } from 'react-icons/fa';
 import logo from '../../assets/school.png';
@@ -28,7 +31,10 @@ const Layout = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: FiHome },
+    { name: 'Content', href: '/admin/content', icon: FiFileText },
+    { name: 'Website Data', href: '/admin/website-data', icon: FiGrid },
     { name: 'Gallery', href: '/admin/gallery', icon: FiImage },
+    { name: 'Stories', href: '/admin/stories', icon: FiBookOpen },
     { name: 'Events', href: '/admin/events', icon: FiCalendar },
     { name: 'Statistics', href: '/admin/statistics', icon: FiAward },
     { name: 'Messages', href: '/admin/contact', icon: FiMessageSquare }

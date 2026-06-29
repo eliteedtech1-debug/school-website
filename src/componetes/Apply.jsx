@@ -10,8 +10,32 @@ import {
   FiCheck,
 } from "react-icons/fi";
 import { motion } from "framer-motion";
+import SEO from "../components/SEO";
+import { useWebsiteContent } from "../lib/useWebsiteContent";
+import { Skeleton, CardSkeleton } from "../components/Skeleton";
 
 const Apply = () => {
+  const { getSection, getParagraphs, loading } = useWebsiteContent();
+  
+  // Parse structured data
+  const parseStructured = (key) => {
+    const section = getSection(key);
+    if (!section) return [];
+    const paragraphs = typeof section.paragraphs === 'string'
+      ? JSON.parse(section.paragraphs)
+      : (section.paragraphs || []);
+    return paragraphs.map(p => {
+      try { return { ...JSON.parse(p.text), _id: p.id }; }
+      catch { return null; }
+    }).filter(Boolean);
+  };
+
+  const applyHero = getSection('apply_hero');
+  const requirements = parseStructured('apply_requirements');
+  const steps = parseStructured('apply_steps');
+  const deadlineSection = getSection('apply_deadline');
+  const deadlineText = getParagraphs('apply_deadline')[0]?.text || getParagraphs('apply_deadline')[0] || '';
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -66,6 +90,13 @@ const Apply = () => {
   };
 
   return (
+    <>
+      <SEO
+        title="Admissions"
+        description="Apply for admission to Dr. Kabiru Gwarzo Academy. Easy online application process for Nursery, Primary, Junior Secondary, and Senior Secondary programs."
+        keywords="admissions, apply to school, Kano school admission, online application, enrollment, Dr Kabiru Gwarzo Academy admission"
+        canonicalPath="/apply"
+      />
     <div className="pt-16">
       {/* Hero Section - Matching your style */}
 
@@ -83,16 +114,76 @@ const Apply = () => {
 
         {/* المحتوى */}
         <div className="relative z-10 max-w-4xl mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-6 text-yellow-400">
-            Apply Now{" "}
-          </h1>
-
-          <p className="text-lg md:text-xl text-blue-100">
-            Begin your journey to excellence at Dr. Kabiru Gwarzo Academy &
-            Tahfeez
-          </p>
+          {loading ? (
+            <>
+              <Skeleton className="h-12 w-64 mx-auto mb-6" />
+              <Skeleton className="h-6 w-96 mx-auto" />
+            </>
+          ) : (
+            <>
+              <h1 className="text-4xl md:text-5xl font-extrabold mb-6 text-yellow-400">
+                {applyHero?.title || "Apply Now"}
+              </h1>
+              <p className="text-lg md:text-xl text-blue-100">
+                {getParagraphs('apply_hero')[0]?.text || getParagraphs('apply_hero')[0] || "Begin your journey to excellence at Dr. Kabiru Gwarzo Academy & Tahfeez"}
+              </p>
+            </>
+          )}
         </div>
       </motion.section>
+
+      {/* Requirements Section */}
+      <section className="py-12 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-white">
+            {getSection('apply_requirements')?.title || "Requirements"}
+          </h2>
+          {loading ? (
+            <CardSkeleton count={4} cols={2} />
+          ) : (
+            <div className="grid md:grid-cols-2 gap-6">
+              {requirements.map((req, idx) => (
+                <div key={req._id || idx} className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-white">{req.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-300">{req.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Application Steps */}
+      <section className="py-12 bg-gray-50 dark:bg-gray-950">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-white">
+            {getSection('apply_steps')?.title || "Application Process"}
+          </h2>
+          {loading ? (
+            <CardSkeleton count={5} cols={1} />
+          ) : (
+            <div className="space-y-4">
+              {steps.map((step, idx) => (
+                <div key={step._id || idx} className="flex gap-4 p-6 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-950 dark:bg-yellow-400 text-white dark:text-gray-900 flex items-center justify-center font-bold text-xl">
+                    {step.step}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1 text-gray-900 dark:text-white">{step.title}</h3>
+                    <p className="text-gray-600 dark:text-gray-300">{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {deadlineText && (
+            <div className="mt-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-center">
+              <p className="text-gray-800 dark:text-gray-200">{deadlineText}</p>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Form Section */}
       <section className="py-12 md:py-16 bg-gray-100 dark:bg-gray-950 ">
@@ -437,7 +528,7 @@ const Apply = () => {
           </motion.div>
         </div>
       </section>
-    </div>
+    </div></>
   );
 };
 

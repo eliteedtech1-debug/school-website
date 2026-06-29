@@ -1,43 +1,89 @@
 const express = require('express');
 const { auth } = require('../middleware/auth');
+const { WebsiteSection } = require('../models');
 const router = express.Router();
 
-// @route   GET /api/content
-// @desc    Get website content
-// @access  Public
+// GET /api/content          — list all sections (public, sorted by order)
 router.get('/', async (req, res) => {
   try {
-    // Mock content data
-    const content = {
-      hero: {
-        title: 'Dr. Kabiru Gwarzo Academy',
-        subtitle: 'Excellence in Islamic Education',
-        description: 'Nurturing young minds with quality Islamic education and modern learning approaches.'
-      },
-      about: {
-        title: 'About Our School',
-        description: 'We are committed to providing quality education.',
-        mission: 'To provide excellent education.',
-        vision: 'To be a leading educational institution.'
-      }
-    };
-    res.json(content);
-  } catch (error) {
-    console.error('Get content error:', error);
-    res.status(500).json({ message: 'Server error' });
+    const sections = await WebsiteSection.findAll({
+      where: { is_visible: 1 },
+      order: [['order_index', 'ASC']],
+    });
+    res.json(sections);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
-// @route   PUT /api/content
-// @desc    Update website content
-// @access  Private
-router.put('/', auth, async (req, res) => {
+// GET /api/content/all      — list all sections incl. hidden (admin)
+router.get('/all', auth, async (req, res) => {
   try {
-    // Mock update - in real implementation, save to database
-    res.json({ message: 'Content updated successfully' });
-  } catch (error) {
-    console.error('Update content error:', error);
-    res.status(500).json({ message: 'Server error' });
+    const sections = await WebsiteSection.findAll({ order: [['order_index', 'ASC']] });
+    res.json(sections);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/content         — create a new section
+router.post('/', auth, async (req, res) => {
+  try {
+    const { title, section_key, order_index, paragraphs, media, is_visible } = req.body;
+    const school_id = req.user.school_id || 1; // default school 1 for single-school deploy
+    const section = await WebsiteSection.create({
+      school_id,
+      section_key: section_key || `section_${Date.now()}`,
+      title,
+      order_index: order_index ?? 0,
+      paragraphs: paragraphs || [],
+      media: media || [],
+      is_visible: is_visible ?? 1,
+    });
+    res.status(201).json(section);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PUT /api/content/:id      — update a section (title, paragraphs, media, visibility, order)
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const section = await WebsiteSection.findByPk(req.params.id);
+    if (!section) return res.status(404).json({ message: 'Section not found' });
+
+    const allowed = ['title', 'section_key', 'order_index', 'is_visible', 'paragraphs', 'media'];
+    allowed.forEach(f => { if (req.body[f] !== undefined) section[f] = req.body[f]; });
+    await section.save();
+    res.json(section);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// DELETE /api/content/:id   — delete a section
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const section = await WebsiteSection.findByPk(req.params.id);
+    if (!section) return res.status(404).json({ message: 'Section not found' });
+    await section.destroy();
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PUT /api/content/reorder  — reorder sections (body: [{ id, order_index }])
+router.put('/reorder/bulk', auth, async (req, res) => {
+  try {
+    await Promise.all(
+      req.body.map(({ id, order_index }) =>
+        WebsiteSection.update({ order_index }, { where: { id } })
+      )
+    );
+    res.json({ message: 'Reordered' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 

@@ -1,59 +1,55 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const axios = require('axios');
+const FormData = require('form-data');
 const { auth } = require('../middleware/auth');
 const router = express.Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+const FILE_REPO_URL = process.env.FILE_REPO_URL || 'https://files.eliteedu.tech';
+const FILE_REPO_API_KEY = process.env.FILE_REPO_API_KEY || 'your-secret-api-key';
 
+// Use memory storage — no disk writes; pipe buffer straight to file server
 const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  },
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Invalid file type'));
-    }
-  }
+    const allowed = /jpeg|jpg|png|gif|webp/;
+    if (allowed.test(file.mimetype)) return cb(null, true);
+    cb(new Error('Images only (jpeg, jpg, png, gif, webp)'));
+  },
 });
 
-// @route   POST /api/upload
-// @desc    Upload file
-// @access  Private
-router.post('/', auth, upload.single('file'), (req, res) => {
+// POST /api/upload — upload image, return { url, thumbnail_url, public_id }
+router.post('/', auth, upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
+    const form = new FormData();
+    const ext = path.extname(req.file.originalname) || '.jpg';
+    const filename = `website-${Date.now()}${ext}`;
+
+    form.append('file', req.file.buffer, { filename, contentType: req.file.mimetype });
+
+    const response = await axios.post(`${FILE_REPO_URL}/upload`, form, {
+      headers: { ...form.getHeaders(), Authorization: `Bearer ${FILE_REPO_API_KEY}` },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    });
+
+    const { url, filename: savedFilename } = response.data;
+
+    // Thumbnail: same server, append ?w=200 query (or use a /thumb/ prefix if supported)
+    const thumbnail_url = `${FILE_REPO_URL}/thumb/${savedFilename}?w=200&h=200&fit=cover`;
 
     res.json({
-      message: 'File uploaded successfully',
-      file: {
-        filename: req.file.filename,
-        originalname: req.file.originalname,
-        size: req.file.size,
-        path: `/uploads/${req.file.filename}`
-      }
+      url,
+      thumbnail_url,
+      public_id: savedFilename.split('.')[0],
     });
-  } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ message: 'Server error' });
+  } catch (err) {
+    console.error('Upload error:', err.response?.data || err.message);
+    res.status(500).json({ message: err.response?.data?.error || 'Upload failed' });
   }
 });
 

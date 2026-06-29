@@ -1,4 +1,26 @@
+import SEO from "../components/SEO";
+import { useWebsiteContent } from "../lib/useWebsiteContent";
+import { Skeleton, CardSkeleton } from "../components/Skeleton";
+
 export default function Price() {
+    const { getSection, getParagraphs, loading } = useWebsiteContent();
+    
+    const parseStructured = (key) => {
+        const section = getSection(key);
+        if (!section) return [];
+        const paragraphs = typeof section.paragraphs === 'string'
+            ? JSON.parse(section.paragraphs)
+            : (section.paragraphs || []);
+        return paragraphs.map(p => {
+            try { return { ...JSON.parse(p.text), _id: p.id }; }
+            catch { return null; }
+        }).filter(Boolean);
+    };
+
+    const pricingHero = getSection('pricing_hero');
+    const pricingTiers = parseStructured('pricing_tiers');
+    const paymentPlans = parseStructured('pricing_payment_plans');
+
     const tables = [
         {
             grade: "Junior Sec",
@@ -52,6 +74,13 @@ export default function Price() {
     ]
 
     return (
+        <>
+            <SEO
+                title="School Fees"
+                description="View Dr. Kabiru Gwarzo Academy tuition and school fees schedule for Nursery, Primary, Junior Secondary, and Senior Secondary programs. Affordable quality education."
+                keywords="school fees, tuition, Kano school fees, Dr Kabiru Gwarzo Academy fees, academy fees Nigeria"
+                canonicalPath="/price"
+            />
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 pt-24 px-4">
             <div className="max-w-7xl mx-auto ">
                 {/* Header */}
@@ -174,6 +203,6 @@ export default function Price() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div></>
     )
 }

@@ -6,6 +6,11 @@ const api = axios.create({
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
+    ...(import.meta.env.VITE_SCHOOL_ID && { 'X-School-Id': import.meta.env.VITE_SCHOOL_ID }),
+    ...(import.meta.env.VITE_BRANCH_ID && { 'X-Branch-Id': import.meta.env.VITE_BRANCH_ID }),
+    ...(import.meta.env.VITE_WEBSITE_TOKEN && {
+      'Authorization': `Bearer ${import.meta.env.VITE_WEBSITE_TOKEN}`,
+    }),
   },
 });
 

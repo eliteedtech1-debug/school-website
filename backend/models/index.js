@@ -6,6 +6,9 @@ const ContactMessage = require('./ContactMessage');
 const Event = require('./Event');
 const Achievement = require('./Achievement');
 const Statistic = require('./Statistic');
+const WebsiteSection = require('./WebsiteSection');
+const WebsiteContent = require('./WebsiteContent');
+const Story = require('./Story');
 
 // Define associations
 User.hasMany(Gallery, { foreignKey: 'uploaded_by', as: 'uploadedGallery' });
@@ -31,5 +34,8 @@ module.exports = {
   ContactMessage,
   Event,
   Achievement,
-  Statistic
+  Statistic,
+  WebsiteSection,
+  WebsiteContent,
+  Story,
 };
