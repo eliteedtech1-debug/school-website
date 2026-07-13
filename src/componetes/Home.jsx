@@ -72,15 +72,7 @@ const Home = () => {
   const address    = meta?.address || "";
   const logoUrl    = meta?.logo_url || null;
 
-  // CMS overrides
-  const heroImages     = getMedia('hero');
-  const carouselImages = heroImages.length > 0 ? heroImages.map(m => m.url) : [];
-  const heroTitle      = getSection('hero')?.title || null;
-  const heroParagraphs = getParagraphs('hero');
-  const welcomeParagraphs = getParagraphs('welcome');
-  const welcomeImage   = getMedia('welcome')[0]?.url || null;
-
-  // Parse structured data from CMS sections (JSON in paragraph text)
+  // Parse structured data from CMS sections (JSON in paragraph text) — defined first for hoisting
   const parseStructured = (key) => {
     const section = getSection(key);
     if (!section) return [];
@@ -92,6 +84,23 @@ const Home = () => {
       catch { return null; }
     }).filter(Boolean);
   };
+
+  // CMS overrides
+  const heroImages     = getMedia('hero');
+
+  // Also check if hero image is stored in paragraph data (from admin form's image field)
+  const parsedHero = parseStructured('hero');
+  const heroImageFromParagraph = parsedHero[0]?.image || null;
+
+  // Use media if available, otherwise use image from paragraph data
+  const carouselImages = heroImages.length > 0 
+    ? heroImages.map(m => m.url) 
+    : (heroImageFromParagraph ? [heroImageFromParagraph] : []);
+
+  const heroTitle      = getSection('hero')?.title || null;
+  const heroParagraphs = getParagraphs('hero');
+  const welcomeParagraphs = getParagraphs('welcome');
+  const welcomeImage   = getMedia('welcome')[0]?.url || null;
 
   const resolveIcon = (iconName) => {
     const Icon = iconMap[iconName?.toLowerCase()] || FiTarget;
