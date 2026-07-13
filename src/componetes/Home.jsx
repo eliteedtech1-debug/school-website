@@ -89,11 +89,12 @@ const Home = () => {
   const parsedHero = parseStructured('hero');
   const heroData = parsedHero[0] || {};
 
-  // Hero background image: check media array first, then paragraph image field
+  // Hero background images: check media array first, then paragraph images array, then single image (legacy)
   const heroImages = getMedia('hero');
+  const heroImagesFromParagraph = heroData.images || (heroData.image ? [heroData.image] : []);
   const carouselImages = heroImages.length > 0
     ? heroImages.map(m => m.url)
-    : (heroData.image ? [heroData.image] : []);
+    : heroImagesFromParagraph;
 
   // Hero title from paragraph JSON, fall back to section title, then null
   const heroTitle = heroData.title || getSection('hero')?.title || null;

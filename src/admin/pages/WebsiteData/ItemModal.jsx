@@ -8,6 +8,7 @@ export default function ItemModal({ sectionKey, tabLabel, initialValue, onSave, 
   const [form, setForm] = useState(initialValue);
   const [uploading, setUploading] = useState(false);
 
+  // Single image upload (for non-hero sections)
   const uploadMedia = async (file) => {
     const fd = new FormData();
     fd.append('file', file);
@@ -18,6 +19,35 @@ export default function ItemModal({ sectionKey, tabLabel, initialValue, onSave, 
       if (url) setForm(p => ({ ...p, image: url }));
     } catch { toast.error('Upload failed'); }
     finally { setUploading(false); }
+  };
+
+  // Multiple image upload (for hero carousel)
+  const uploadHeroImages = async (files) => {
+    setUploading(true);
+    const uploaded = [];
+    for (const file of files) {
+      const fd = new FormData();
+      fd.append('file', file);
+      try {
+        const res = await api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        const url = res.data?.url || res.data?.data?.url || '';
+        if (url) uploaded.push(url);
+      } catch { toast.error(`Upload failed: ${file.name}`); }
+    }
+    if (uploaded.length > 0) {
+      setForm(p => ({
+        ...p,
+        images: [...(p.images || []), ...uploaded],
+      }));
+    }
+    setUploading(false);
+  };
+
+  const removeHeroImage = (idx) => {
+    setForm(p => ({
+      ...p,
+      images: (p.images || []).filter((_, i) => i !== idx),
+    }));
   };
 
   const update = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -59,21 +89,58 @@ export default function ItemModal({ sectionKey, tabLabel, initialValue, onSave, 
                 <input className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600" value={form.subtitle} onChange={e => update('subtitle', e.target.value)} placeholder="& Tahfeez — Strive for Excellence" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hero Image</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Carousel Images (upload multiple for slideshow)</label>
+                
+                {/* Image list */}
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {(form.images && form.images.length > 0 ? form.images : (form.image ? [form.image] : [])).map((url, idx) => (
+                    <div key={idx} className="relative group" style={{ width: 100, height: 70 }}>
+                      <img src={url} alt={`Hero ${idx + 1}`} className="w-full h-full object-cover rounded-lg border border-gray-300 dark:border-gray-600" />
+                      <button
+                        type="button"
+                        onClick={() => removeHeroImage(idx)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >✕</button>
+                      <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] text-center rounded-b-lg">{idx + 1}</span>
+                    </div>
+                  ))}
+                  {(!form.images || form.images.length === 0) && !form.image && (
+                    <div className="w-full p-4 text-center text-gray-400 dark:text-gray-500 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                      No images yet. Upload or paste URLs below.
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload multiple */}
+                <div className="flex gap-2 mb-2">
+                  <input
+                    className="flex-1 border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                    value={form.imageUrlInput || ''}
+                    onChange={e => update('imageUrlInput', e.target.value)}
+                    placeholder="Paste image URL and press Add"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = (form.imageUrlInput || '').trim();
+                      if (!url) return;
+                      setForm(p => ({
+                        ...p,
+                        images: [...(p.images || []), url],
+                        imageUrlInput: '',
+                      }));
+                    }}
+                    className="px-3 py-2 rounded-lg text-sm bg-gray-200 dark:bg-gray-600 font-semibold hover:bg-gray-300 dark:hover:bg-gray-500"
+                  >Add</button>
+                </div>
+
                 <div className="flex gap-2">
-                  <input className="flex-1 border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600" value={form.image} onChange={e => update('image', e.target.value)} placeholder="/school.png or https://..." />
                   <label className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm cursor-pointer ${uploading ? 'bg-gray-400' : 'bg-blue-950 dark:bg-yellow-400 text-white dark:text-blue-950'} font-semibold`}>
                     <FiUpload className="w-4 h-4" />
-                    {uploading ? '...' : 'Upload'}
-                    <input type="file" className="hidden" accept="image/*" disabled={uploading} onChange={e => { if (e.target.files[0]) uploadMedia(e.target.files[0]); }} />
+                    {uploading ? 'Uploading...' : 'Upload Multiple'}
+                    <input type="file" className="hidden" accept="image/*" multiple disabled={uploading} onChange={e => { if (e.target.files && e.target.files.length > 0) uploadHeroImages(e.target.files); }} />
                   </label>
                 </div>
-                {form.image && (
-                  <div className="mt-2">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">preview</p>
-                    <img src={form.image} alt="preview" className="w-full h-32 rounded-lg object-cover" />
-                  </div>
-                )}
               </div>
             </>
           )}

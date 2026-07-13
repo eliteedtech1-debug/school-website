@@ -12,7 +12,7 @@ export const tabs = [
 ];
 
 export const defaults = {
-  hero: { title: 'Welcome to Dr. Kabiru Gwarzo Academy', subtitle: '& Tahfeez — Strive for Excellence', image: '' },
+  hero: { title: 'Welcome to Dr. Kabiru Gwarzo Academy', subtitle: '& Tahfeez — Strive for Excellence', image: '', images: [] },
   home_stats: { icon: 'users', from: 0, to: 100, label: '', description: '', number: '', suffix: '+' },
   home_streams: { title: '', description: '', icon: 'book' },
   core_values: { title: '', description: '', icon: 'target' },

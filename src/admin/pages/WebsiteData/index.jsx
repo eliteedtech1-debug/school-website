@@ -95,7 +95,7 @@ export default function WebsiteData() {
   });
 
   const serializeItem = (c) => {
-    const allowed = ['title','description','icon','status','color','level','grades','time','text','number','label','from','to','name','position','image','items','subtitle','tagline','points','quote','suffix','step','program_type','boys_fee','girls_fee','type','category','videoUrl','motto','url'];
+    const allowed = ['title','description','icon','status','color','level','grades','time','text','number','label','from','to','name','position','image','images','items','subtitle','tagline','points','quote','suffix','step','program_type','boys_fee','girls_fee','type','category','videoUrl','motto','url'];
     const obj = {};
     allowed.forEach(k => { if (c[k] !== undefined) obj[k] = c[k]; });
     return JSON.stringify(obj);
