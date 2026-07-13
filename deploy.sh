@@ -28,11 +28,23 @@ GO54_PATH="${GO54_PATH:-/home2/elitesc1/public_html/haiha.eliteedu.tech}"
 
 if [ -f "$GO54_KEY" ]; then
   # Ensure the remote directory exists
-  ssh -i "$GO54_KEY" -o StrictHostKeyChecking=no -o SendEnv="" "${GO54_USER}@${GO54_HOST}" "mkdir -p ${GO54_PATH}" 2>&1 | grep -v "perl:\\|warning:\\|LANG\\|LC_\\|locale\\|Falling\\|are supported"
-  # Pack dist/ and extract on server (rsync not available on go54)
-  tar -czf - -C dist . | \
-    ssh -i "$GO54_KEY" -o StrictHostKeyChecking=no -o SendEnv="" "${GO54_USER}@${GO54_HOST}" \
-    "cd ${GO54_PATH} && tar -xzf - && echo '✅ files extracted'" 2>&1 | grep -v "perl:\\|warning:\\|LANG\\|LC_\\|locale\\|Falling\\|are supported"
+  ssh -i "$GO54_KEY" -o StrictHostKeyChecking=no "${GO54_USER}@${GO54_HOST}" "mkdir -p ${GO54_PATH}" 2>&1 | grep -v "perl:\|warning:\|LANG\|LC_\|locale\|Falling\|are supported" || true
+
+  # Use SCP + SSH (more reliable than tar pipe — rsync not available on go54)
+  echo "  📦 Packing files..."
+  TAR_FILE="/tmp/haiha-deploy.tar.gz"
+  rm -f "$TAR_FILE"
+  tar -czf "$TAR_FILE" -C dist .
+
+  echo "  📤 Uploading via SCP..."
+  scp -i "$GO54_KEY" -o StrictHostKeyChecking=no -q "$TAR_FILE" "${GO54_USER}@${GO54_HOST}:${GO54_PATH}/"
+
+  echo "  📂 Extracting on server..."
+  ssh -i "$GO54_KEY" -o StrictHostKeyChecking=no "${GO54_USER}@${GO54_HOST}" \
+    "cd ${GO54_PATH} && tar -xzf haiha-deploy.tar.gz && rm haiha-deploy.tar.gz" 2>&1 | grep -v "perl:\|warning:\|LANG\|LC_\|locale\|Falling\|are supported" || true
+
+  rm -f "$TAR_FILE"
+
   echo ""
   echo "✅ Deployed to: http://haiha.eliteedu.tech/"
   echo "   Host: ${GO54_HOST}:${GO54_PATH}"
