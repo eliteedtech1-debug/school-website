@@ -72,7 +72,7 @@ const Home = () => {
   const address    = meta?.address || "";
   const logoUrl    = meta?.logo_url || null;
 
-  // Parse structured data from CMS sections (JSON in paragraph text) — defined first for hoisting
+  // Parse structured data from CMS sections (JSON in paragraph text)
   const parseStructured = (key) => {
     const section = getSection(key);
     if (!section) return [];
@@ -85,20 +85,21 @@ const Home = () => {
     }).filter(Boolean);
   };
 
-  // CMS overrides
-  const heroImages     = getMedia('hero');
-
-  // Also check if hero image is stored in paragraph data (from admin form's image field)
+  // ── Hero section: all fields come from parsed paragraph JSON ──
   const parsedHero = parseStructured('hero');
-  const heroImageFromParagraph = parsedHero[0]?.image || null;
+  const heroData = parsedHero[0] || {};
 
-  // Use media if available, otherwise use image from paragraph data
-  const carouselImages = heroImages.length > 0 
-    ? heroImages.map(m => m.url) 
-    : (heroImageFromParagraph ? [heroImageFromParagraph] : []);
+  // Hero background image: check media array first, then paragraph image field
+  const heroImages = getMedia('hero');
+  const carouselImages = heroImages.length > 0
+    ? heroImages.map(m => m.url)
+    : (heroData.image ? [heroData.image] : []);
 
-  const heroTitle      = getSection('hero')?.title || null;
-  const heroParagraphs = getParagraphs('hero');
+  // Hero title from paragraph JSON, fall back to section title, then null
+  const heroTitle = heroData.title || getSection('hero')?.title || null;
+  // Hero subtitle from paragraph JSON, fall back to meta tagline
+  const heroSubtitle = heroData.subtitle || tagline || null;
+
   const welcomeParagraphs = getParagraphs('welcome');
   const welcomeImage   = getMedia('welcome')[0]?.url || null;
 
@@ -194,7 +195,7 @@ const Home = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          {/* 🔹 الخلفية المتحركة */}
+          {/* Carousel background */}
           <AnimatePresence>
             <motion.img
               key={index}
@@ -210,7 +211,7 @@ const Home = () => {
           {/* overlay */}
           <div className="absolute inset-0 bg-black/60 z-10" />
 
-          {/* 🔹 النص */}
+          {/* Hero text content */}
           <div className="relative z-20 flex items-center justify-center h-full">
             <div className="max-w-7xl mx-auto px-4 text-center">
               {logoUrl && (
@@ -231,9 +232,9 @@ const Home = () => {
                 )}
               </h1>
 
-              {(heroParagraphs[0] || tagline) && (
+              {heroSubtitle && (
                 <p className="text-xl md:text-2xl mb-6 text-yellow-400 font-semibold">
-                  {heroParagraphs[0]?.text || tagline}
+                  {heroSubtitle}
                 </p>
               )}
 
