@@ -21,64 +21,22 @@ export default function Price() {
     const pricingTiers = parseStructured('pricing_tiers');
     const paymentPlans = parseStructured('pricing_payment_plans');
 
-    const tables = [
-        {
-            grade: "Junior Sec",
-            type: "Academy with Islamiyyah",
-            statuss: "In Take",
-            boys: "₦121,700.00",
-            girls: "₦124,200.00",
-        },
-        {
-            grade: "Junior Sec",
-            type: "Islamiyyah Only",
-            statuss: "In Take",
-            boys: "₦45,000.00",
-            girls: "₦45,000.00",
-        },
-        {
-            grade: "Junior Sec",
-            type: "Islamiyyah Only",
-            statuss: "Running",
-            boys: "₦3,000.00",
-            girls: "₦3,000.00",
-        },
-        {
-            grade: "Nursery",
-            type: "Academy Only",
-            statuss: "In Take",
-            boys: "₦91,500.00",
-            girls: "₦94,000.00",
-        },
-        {
-            grade: "Pre-Nursery",
-            type: "Academy Only",
-            statuss: "In Take",
-            boys: "₦91,500.00",
-            girls: "₦94,000.00",
-        },
-        {
-            grade: "Pre-Nursery",
-            type: "Academy with Islamiyyah",
-            statuss: "In Take",
-            boys: "₦103,000.00",
-            girls: "₦106,000.00",
-        },
-        {
-            grade: "Primary",
-            type: "Academy with Islamiyyah",
-            statuss: "In Take",
-            boys: "₦112,000.00",
-            girls: "₦115,000.00",
-        },
-    ]
+    const tables = pricingTiers.length > 0
+      ? pricingTiers.map(p => ({
+          grade: p.grade,
+          type: p.program_type || p.type || '',
+          statuss: p.status || p.statuss || 'In Take',
+          boys: p.boys_fee || p.boys || '—',
+          girls: p.girls_fee || p.girls || '—',
+        }))
+      : []
 
     return (
         <>
             <SEO
                 title="School Fees"
-                description="View Dr. Kabiru Gwarzo Academy tuition and school fees schedule for Nursery, Primary, Junior Secondary, and Senior Secondary programs. Affordable quality education."
-                keywords="school fees, tuition, Kano school fees, Dr Kabiru Gwarzo Academy fees, academy fees Nigeria"
+                description="View our school fees schedule for all grade levels. Affordable quality education."
+                keywords="school fees, tuition, school fees schedule"
                 canonicalPath="/price"
             />
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 pt-24 px-4">
@@ -86,10 +44,10 @@ export default function Price() {
                 {/* Header */}
                 <div className="mb-8 text-center">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
-                        Tuition and Fees
+                        {pricingHero?.title || 'Tuition and Fees'}
                     </h1>
                     <p className="text-gray-600 dark:text-gray-300">
-                        Transparent fee structure for all grade levels
+                        {getParagraphs('pricing_hero')[0]?.text || 'Transparent fee structure for all grade levels'}
                     </p>
                 </div>
 
@@ -177,30 +135,12 @@ export default function Price() {
 
                 {/* Additional Info */}
                 <div className="mt-8 grid md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
-                        <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-2">
-                            Payment Information
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-300 text-sm">
-                            Fees can be paid in installments. Contact the administration office for payment plans.
-                        </p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
-                        <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-2">
-                            Additional Charges
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-300 text-sm">
-                            Uniforms, textbooks, and extracurricular activities may incur additional costs.
-                        </p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
-                        <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-2">
-                            Scholarships
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-300 text-sm">
-                            Merit-based scholarships available. Contact admissions for eligibility criteria.
-                        </p>
-                    </div>
+                    {paymentPlans.length > 0 ? paymentPlans.map((plan, i) => (
+                        <div key={i} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
+                            <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-2">{plan.title}</h3>
+                            <p className="text-gray-600 dark:text-gray-300 text-sm">{plan.description}</p>
+                        </div>
+                    )) : null}
                 </div>
             </div>
         </div></>

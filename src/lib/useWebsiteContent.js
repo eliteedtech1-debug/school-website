@@ -18,21 +18,26 @@ const fetchSections = () => {
       headers: WEBSITE_TOKEN ? { Authorization: `Bearer ${WEBSITE_TOKEN}` } : {},
     })
     .then(r => { _cache = r.data; return _cache; })
-    .catch(() => ({ sections: [], meta: null }));
+    .catch(() => ({ sections: [], meta: null, theme: null }));
   return _promise;
 };
 
 /**
- * Returns { sections, meta, loading }
+ * Returns { sections, meta, theme, loading }
  * sections: array of { section_key, title, paragraphs, media, is_visible }
  * Helper: getSection(key) → section | null
  */
 export function useWebsiteContent() {
-  const [state, setState] = useState({ sections: [], meta: null, loading: true });
+  const [state, setState] = useState({ sections: [], meta: null, theme: null, loading: true });
 
   useEffect(() => {
     fetchSections().then(data => {
-      setState({ sections: data.sections || [], meta: data.meta || null, loading: false });
+      setState({
+        sections: data.sections || [],
+        meta: data.meta || null,
+        theme: data.theme || null,
+        loading: false,
+      });
     });
   }, []);
 
@@ -49,4 +54,12 @@ export function useWebsiteContent() {
   };
 
   return { ...state, getSection, getParagraphs, getMedia };
+}
+
+/**
+ * Hook that returns just the theme object + loading state
+ */
+export function useWebsiteTheme() {
+  const { theme, loading } = useWebsiteContent();
+  return { theme, loading };
 }

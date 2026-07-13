@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@elscholar-ui': path.resolve(__dirname, '../elscholar-ui/src'),
+      '@elscholar-ui': path.resolve(__dirname, 'src/elscholar-ui'),
     },
   },
   define: {

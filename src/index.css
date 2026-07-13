@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    /* SCH/29 — Yale Blue + Gold (matches Heritage Academy logo) */
+    --color-primary:    #0F2D6B;  /* Yale blue  — shield, text, banner */
+    --color-secondary:  #C9A227;  /* Gold       — laurel, "H", accents */
+    --color-accent:     #EAD282;  /* Light gold — highlights, badges   */
+    --color-background: #f8f9fc;  /* Near-white with cool tint         */
+    --color-text:       #0F2D6B;  /* Yale blue  — body text            */
+    --font-family:      Poppins, sans-serif;
+    --font-heading:     Poppins, sans-serif;
+    --border-radius:    0.5rem;
+  }
+}
+
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }

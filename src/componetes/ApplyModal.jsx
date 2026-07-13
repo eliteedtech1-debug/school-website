@@ -1,51 +1,73 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FiX, FiCalendar, FiExternalLink, FiMapPin, FiCheckSquare } from 'react-icons/fi';
+import { FiX, FiCalendar, FiExternalLink, FiMapPin } from 'react-icons/fi';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL   = import.meta.env.VITE_API_URL  || '';
 const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID || '';
-const APP_URL = import.meta.env.VITE_APP_URL || '';
-const WEBSITE_TOKEN = import.meta.env.VITE_WEBSITE_TOKEN || '';
+const APP_URL   = import.meta.env.VITE_APP_URL   || '';
+const WEBSITE_TOKEN  = import.meta.env.VITE_WEBSITE_TOKEN  || '';
+const ADMISSION_URL  = import.meta.env.VITE_ADMISSION_URL  || ''; // optional external link
 const AUTH_HEADER = WEBSITE_TOKEN ? { Authorization: `Bearer ${WEBSITE_TOKEN}` } : {};
 
+/* ─── helpers ──────────────────────────────────────────────────────── */
 function formatDate(dateStr) {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
-
 function daysRemaining(dateStr) {
   if (!dateStr) return null;
-  const now = new Date();
-  const close = new Date(dateStr);
-  const diff = Math.ceil((close - now) / (1000 * 60 * 60 * 24));
-  return diff;
+  return Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
 }
-
 function DeadlineTag({ closingDate }) {
   const days = daysRemaining(closingDate);
   if (days === null) return null;
-  if (days <= 0) return <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">Closed</span>;
+  if (days <= 0)  return <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">Closed</span>;
   if (days === 1) return <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">1 day left</span>;
-  if (days <= 7) return <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">{days} days left</span>;
+  if (days <= 7)  return <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">{days} days left</span>;
   return <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">{days} days left</span>;
 }
 
-export default function ApplyModal({ onClose }) {
-  const [branches, setBranches] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [selectedBranch, setSelectedBranch] = useState(null);
-  const [termsText, setTermsText] = useState('');
-  const [conductRules, setConductRules] = useState([]);
-  const [termsLoading, setTermsLoading] = useState(false);
-  const [termsAgreed, setTermsAgreed] = useState(false);
+/* ─── Shared modal shell ───────────────────────────────────────────── */
+function ModalShell({ onClose, children }) {
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-blue-950 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>,
+    document.body
+  );
+}
 
+/* ─── Main component ───────────────────────────────────────────────── */
+export default function ApplyModal({ onClose }) {
+  /* ── If VITE_ADMISSION_URL is set → open it immediately and close ── */
   useEffect(() => {
-    if (!API_URL || !SCHOOL_ID) {
-      setLoading(false);
-      return;
+    if (ADMISSION_URL) {
+      window.open(ADMISSION_URL, '_blank', 'noopener,noreferrer');
+      onClose();
     }
+  }, [onClose]);
+
+  const [branches, setBranches]   = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [selectedBranch, setSelectedBranch] = useState(null);
+  const [conductRules, setConductRules]     = useState([]);
+  const [termsLoading, setTermsLoading]     = useState(false);
+  const [termsAgreed, setTermsAgreed]       = useState(false);
+
+  /* If external URL, modal already closed above — render nothing */
+  if (ADMISSION_URL) return null;
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (!API_URL || !SCHOOL_ID) { setLoading(false); return; }
     fetch(`${API_URL}/admission-branches/schools/branches?school_id=${SCHOOL_ID}`, { headers: AUTH_HEADER })
       .then(r => r.json())
       .then(res => {
@@ -58,21 +80,16 @@ export default function ApplyModal({ onClose }) {
   }, []);
 
   const fetchTerms = async () => {
-    if (!API_URL || !SCHOOL_ID) return '';
+    if (!API_URL || !SCHOOL_ID) return;
     setTermsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/public/website-content?school_id=${SCHOOL_ID}`, { headers: AUTH_HEADER }).then(r => r.json());
-      const terms = res?.meta?.terms_and_conditions || '';
-      setTermsText(terms);
+      const res = await fetch(
+        `${API_URL}/public/website-content?school_id=${SCHOOL_ID}`,
+        { headers: AUTH_HEADER }
+      ).then(r => r.json());
       setConductRules(res?.conduct_rules || []);
-      return terms;
-    } catch {
-      setTermsText('');
-      setConductRules([]);
-      return '';
-    } finally {
-      setTermsLoading(false);
-    }
+    } catch { setConductRules([]); }
+    finally { setTermsLoading(false); }
   };
 
   const handleApplyClick = async (branch) => {
@@ -84,19 +101,13 @@ export default function ApplyModal({ onClose }) {
   const proceedToApplication = () => {
     if (!selectedBranch) return;
     const branchId = selectedBranch.branch_id || selectedBranch;
-    const url = `${APP_URL}/application?branch_id=${encodeURIComponent(branchId)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(`${APP_URL}/application?branch_id=${encodeURIComponent(branchId)}`, '_blank', 'noopener,noreferrer');
     onClose();
-  };
-
-  const goBack = () => {
-    setSelectedBranch(null);
-    setTermsAgreed(false);
   };
 
   const fallbackBranchId = import.meta.env.VITE_BRANCH_ID || '';
 
-  // ── Terms step ──
+  /* ── Terms & Conditions step ──────────────────────────────────── */
   if (selectedBranch) {
     const branchName = selectedBranch.branch_name || '';
     return createPortal(
@@ -115,7 +126,7 @@ export default function ApplyModal({ onClose }) {
             </button>
           </div>
 
-          {/* School Rules */}
+          {/* Rules */}
           <div className="p-6">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-yellow-400 mb-3">School Rules & Conduct</h3>
             {termsLoading ? (
@@ -142,12 +153,12 @@ export default function ApplyModal({ onClose }) {
               </div>
             ) : (
               <div className="bg-gray-50 dark:bg-blue-900/30 rounded-xl p-5 text-sm text-gray-400 italic">
-                No school rules have been configured yet. Please contact the school for more information.
+                No school rules have been configured yet.
               </div>
             )}
           </div>
 
-          {/* Agreement checkbox */}
+          {/* Checkbox */}
           <div className="px-6 pb-4">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
@@ -164,8 +175,11 @@ export default function ApplyModal({ onClose }) {
 
           {/* Footer */}
           <div className="p-4 border-t border-gray-200 dark:border-blue-800 flex justify-between">
-            <button onClick={goBack} className="px-5 py-2 border border-gray-300 dark:border-blue-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-blue-900 transition">
-              Back to Branches
+            <button
+              onClick={() => setSelectedBranch(null)}
+              className="px-5 py-2 border border-gray-300 dark:border-blue-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-blue-900 transition"
+            >
+              Back
             </button>
             <div className="flex gap-3">
               <button onClick={onClose} className="px-5 py-2 border border-gray-300 dark:border-blue-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-blue-900 transition">
@@ -176,7 +190,7 @@ export default function ApplyModal({ onClose }) {
                 disabled={!termsAgreed}
                 className="flex items-center gap-1.5 bg-blue-950 dark:bg-yellow-400 text-white dark:text-blue-950 px-5 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Proceed <FiExternalLink />
+                Proceed to Application <FiExternalLink />
               </button>
             </div>
           </div>
@@ -186,80 +200,80 @@ export default function ApplyModal({ onClose }) {
     );
   }
 
-  // ── Branch selection step ──
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="bg-white dark:bg-blue-950 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-blue-800">
-          <div>
-            <h2 className="text-xl font-bold text-blue-950 dark:text-yellow-400">Apply for Admission</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Choose Your Preferred Branch</p>
+  /* ── Branch selection step ─────────────────────────────────────── */
+  return (
+    <ModalShell onClose={onClose}>
+      {/* Header */}
+      <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-blue-800">
+        <div>
+          <h2 className="text-xl font-bold text-blue-950 dark:text-yellow-400">Apply for Admission</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Choose Your Preferred Branch</p>
+        </div>
+        <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-blue-800 rounded-full transition">
+          <FiX className="w-5 h-5 text-gray-500 dark:text-gray-300" />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="p-6 max-h-96 overflow-y-auto">
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-blue-950 border-t-transparent rounded-full animate-spin" />
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-blue-800 rounded-full transition">
-            <FiX className="w-5 h-5 text-gray-500 dark:text-gray-300" />
-          </button>
-        </div>
-
-        <div className="p-6 max-h-96 overflow-y-auto">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="w-6 h-6 border-2 border-blue-950 border-t-transparent rounded-full animate-spin" />
+        ) : branches.length > 0 ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-3 rounded-lg">
+              <FiMapPin className="shrink-0" />
+              <span>Select a branch below to start your admission application</span>
             </div>
-          ) : branches.length > 0 ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-3 rounded-lg">
-                <FiMapPin className="shrink-0" />
-                <span>Select a branch below to start your admission application</span>
-              </div>
-              {branches.map(branch => (
-                <div key={branch.branch_id} className="border border-gray-200 dark:border-blue-700 rounded-xl p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-gray-900 dark:text-white">{branch.branch_name}</h3>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">OPEN</span>
-                      </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{branch.branch_name}</p>
-                      {branch.admission_closing_date && (
-                        <div className="flex items-center gap-2 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                          <FiCalendar className="shrink-0" />
-                          <DeadlineTag closingDate={branch.admission_closing_date} />
-                          <span>Deadline: {formatDate(branch.admission_closing_date)}</span>
-                        </div>
-                      )}
+            {branches.map(branch => (
+              <div key={branch.branch_id} className="border border-gray-200 dark:border-blue-700 rounded-xl p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">{branch.branch_name}</h3>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">OPEN</span>
                     </div>
-                    <button
-                      onClick={() => handleApplyClick(branch)}
-                      className="shrink-0 flex items-center gap-1.5 bg-blue-950 dark:bg-yellow-400 text-white dark:text-blue-950 px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition"
-                    >
-                      Apply Now <FiExternalLink />
-                    </button>
+                    {branch.admission_closing_date && (
+                      <div className="flex items-center gap-2 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        <FiCalendar className="shrink-0" />
+                        <DeadlineTag closingDate={branch.admission_closing_date} />
+                        <span>Deadline: {formatDate(branch.admission_closing_date)}</span>
+                      </div>
+                    )}
                   </div>
+                  <button
+                    onClick={() => handleApplyClick(branch)}
+                    className="shrink-0 flex items-center gap-1.5 bg-blue-950 dark:bg-yellow-400 text-white dark:text-blue-950 px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition"
+                  >
+                    Apply Now <FiExternalLink />
+                  </button>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400 mb-4">{error || 'No branches with open admission at this time.'}</p>
-              {fallbackBranchId && (
-                <button
-                  onClick={() => handleApplyClick({ branch_id: fallbackBranchId, branch_name: '' })}
-                  className="inline-flex items-center gap-1.5 bg-blue-950 dark:bg-yellow-400 text-white dark:text-blue-950 px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition"
-                >
-                  Proceed to Application <FiExternalLink />
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* No open branches — show fallback Proceed button */
+          <div className="text-center py-8 space-y-4">
+            <p className="text-gray-500 dark:text-gray-400">No branches with open admission at this time.</p>
+            {fallbackBranchId && (
+              <button
+                onClick={() => handleApplyClick({ branch_id: fallbackBranchId, branch_name: 'Main Campus' })}
+                className="inline-flex items-center gap-1.5 bg-blue-950 dark:bg-yellow-400 text-white dark:text-blue-950 px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition"
+              >
+                Proceed to Application <FiExternalLink />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
-        <div className="p-4 border-t border-gray-200 dark:border-blue-800 flex justify-end">
-          <button onClick={onClose} className="px-5 py-2 border border-gray-300 dark:border-blue-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-blue-900 transition">
-            Cancel
-          </button>
-        </div>
-        </div>
-      </div>,
-      document.body
-    );
-  }
+      {/* Footer */}
+      <div className="p-4 border-t border-gray-200 dark:border-blue-800 flex justify-end">
+        <button onClick={onClose} className="px-5 py-2 border border-gray-300 dark:border-blue-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-blue-900 transition">
+          Cancel
+        </button>
+      </div>
+    </ModalShell>
+  );
+}

@@ -37,6 +37,7 @@ import Test from './admin/pages/Test';
 import SimpleLogin from './admin/pages/SimpleLogin';
 import LoginNoAuth from './admin/pages/LoginNoAuth';
 
+import ThemeProvider from './lib/ThemeProvider';
 import { Navigate } from 'react-router-dom';
 
 const queryClient = new QueryClient({
@@ -154,21 +155,23 @@ function AdminLoginWrapper() {
 
 function PublicRoutes() {
   return (
-    <div className='font-poppins bg-background dark:bg-gray-900 text-gray-800 dark:text-white min-h-screen'>
-      <ScrollToTop />
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/apply" element={<Apply />} />
-        <Route path="/results" element={<Results />} />
-        <Route path="/price" element={<Price />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Footer />
-    </div>
+    <ThemeProvider>
+      <div className='font-poppins bg-background dark:bg-gray-900 text-gray-800 dark:text-white min-h-screen'>
+        <ScrollToTop />
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/apply" element={<Apply />} />
+          <Route path="/results" element={<Results />} />
+          <Route path="/price" element={<Price />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Footer />
+      </div>
+    </ThemeProvider>
   );
 }
 

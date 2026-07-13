@@ -16,7 +16,7 @@ import {
   FiGrid
 } from 'react-icons/fi';
 import { FaGraduationCap, FaSchool } from 'react-icons/fa';
-import logo from '../../assets/school.png';
+
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -67,9 +67,11 @@ const Layout = () => {
           
           <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
             <div className="flex-shrink-0 flex items-center px-4 mb-8">
-              <img src={logo} alt="Dr. Kabiru Gwarzo Academy" className="h-10 w-10 mr-3" />
+              <div className="h-10 w-10 mr-3 rounded-xl bg-blue-950 dark:bg-yellow-400 flex items-center justify-center">
+                <FiGrid className="h-5 w-5 text-white dark:text-blue-950" />
+              </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">DKG Academy</h1>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">School Admin</h1>
                 <p className="text-xs text-gray-600 dark:text-gray-400">Admin Panel</p>
               </div>
             </div>
@@ -127,9 +129,11 @@ const Layout = () => {
           <div className="flex flex-col h-0 flex-1 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
               <div className="flex items-center flex-shrink-0 px-4 mb-8">
-                <img src={logo} alt="Dr. Kabiru Gwarzo Academy" className="h-12 w-12 mr-3" />
+                <div className="h-12 w-12 mr-3 rounded-xl bg-blue-950 dark:bg-yellow-400 flex items-center justify-center">
+                <FiGrid className="h-6 w-6 text-white dark:text-blue-950" />
+              </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">DKG Academy</h1>
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">School Admin</h1>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Admin Panel</p>
                 </div>
               </div>
@@ -193,8 +197,10 @@ const Layout = () => {
               <FiMenu className="h-6 w-6" />
             </button>
             <div className="flex items-center">
-              <img src={logo} alt="Dr. Kabiru Gwarzo Academy" className="h-8 w-8 mr-2" />
-              <span className="text-lg font-semibold text-gray-900 dark:text-white">DKG Academy</span>
+              <div className="h-8 w-8 mr-2 rounded-lg bg-blue-950 dark:bg-yellow-400 flex items-center justify-center">
+                <FiGrid className="h-4 w-4 text-white dark:text-blue-950" />
+              </div>
+              <span className="text-lg font-semibold text-gray-900 dark:text-white">School Admin</span>
             </div>
             <div className="w-10"></div> {/* Spacer for centering */}
           </div>

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { FaGraduationCap, FaEye, FaEyeSlash } from 'react-icons/fa';
-import logo from '../../assets/school.png';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -53,10 +52,12 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <img src={logo} alt="Dr. Kabiru Gwarzo Academy" className="h-20 w-20" />
+            <div className="h-20 w-20 bg-blue-950 dark:bg-yellow-400 rounded-2xl flex items-center justify-center">
+              <FaGraduationCap className="h-10 w-10 text-white dark:text-blue-950" />
+            </div>
           </div>
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-            Dr. Kabiru Gwarzo Academy
+            School Admin
           </h2>
           <p className="mt-2 text-lg font-semibold text-blue-950 dark:text-yellow-400">
             Admin Dashboard
@@ -165,7 +166,7 @@ const Login = () => {
 
         <div className="text-center">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Dr. Kabiru Gwarzo Academy & Tahfeez - Admin Portal v1.0
+            School Admin Portal
           </p>
         </div>
       </div>

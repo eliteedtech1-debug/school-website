@@ -3,7 +3,21 @@ import { FiFacebook, FiInstagram, FiTwitter, FiMail, FiMapPin, FiPhone } from 'r
 import { useWebsiteContent } from '../lib/useWebsiteContent';
 
 const Footer = () => {
-  const { meta } = useWebsiteContent();
+  const { meta, getSection, getParagraphs } = useWebsiteContent();
+
+  const parseStructured = (key) => {
+    const section = getSection(key);
+    if (!section) return [];
+    const paragraphs = typeof section.paragraphs === 'string'
+      ? JSON.parse(section.paragraphs)
+      : (section.paragraphs || []);
+    return paragraphs.map(p => {
+      try { return { ...JSON.parse(p.text), _id: p.id }; }
+      catch { return null; }
+    }).filter(Boolean);
+  };
+
+  const cmsFooterLinks = parseStructured('footer_links');
 
   const schoolName = meta?.school_name || "Our School";
   const tagline    = meta?.tagline || "";
@@ -17,26 +31,26 @@ const Footer = () => {
   const year       = new Date().getFullYear();
 
   return (
-    <footer className="bg-gradient-to-b from-blue-950 via-blue-800 to-blue-950 dark:from-gray-900/70 text-white py-12">
+    <footer style={{ backgroundColor: 'var(--color-primary)' }} className="text-white py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center gap-3 mb-4">
               {logoUrl
                 ? <img src={logoUrl} alt={schoolName} className="w-12 h-12 rounded-lg object-cover" />
-                : <div className="w-12 h-12 bg-yellow-400 rounded-lg flex items-center justify-center text-blue-950 font-bold text-lg">{schoolName.slice(0,2).toUpperCase()}</div>
+                : <div className="w-12 h-12 rounded-lg flex items-center justify-center font-bold text-lg" style={{ backgroundColor: 'var(--color-secondary)', color: 'var(--color-primary)' }}>{schoolName.slice(0,2).toUpperCase()}</div>
               }
-              <h3 className="text-xl font-bold">{schoolName}</h3>
+              <h3 className="text-xl font-bold" style={{ color: 'var(--color-secondary)' }}>{schoolName}</h3>
             </div>
-            {tagline && <p className="text-gray-300 mb-4">{tagline}</p>}
+            {tagline && <p className="mb-4 text-sm opacity-80">{tagline}</p>}
             {address && (
-              <div className="flex items-start gap-2 text-gray-300">
+              <div className="flex items-start gap-2 opacity-80 mt-2">
                 <FiMapPin size={16} className="mt-1 shrink-0" />
                 <span className="text-sm">{address}</span>
               </div>
             )}
             {phone && (
-              <div className="flex items-center gap-2 text-gray-300 mt-2">
+              <div className="flex items-center gap-2 opacity-80 mt-2">
                 <FiPhone size={16} />
                 <span className="text-sm">{phone}</span>
               </div>
@@ -44,29 +58,43 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Quick Links</h4>
+            <h4 className="font-semibold mb-4" style={{ color: 'var(--color-secondary)' }}>
+              {getSection('footer_links')?.title || 'Quick Links'}
+            </h4>
             <div className="space-y-2">
-              <Link to="/about" className="block text-gray-300 hover:text-white transition-colors">About Us</Link>
-              <Link to="/apply" className="block text-gray-300 hover:text-white transition-colors">Apply Now</Link>
-              <Link to="/gallery" className="block text-gray-300 hover:text-white transition-colors">Gallery</Link>
-              <Link to="/results" className="block text-gray-300 hover:text-white transition-colors">Results</Link>
-              <Link to="/contact" className="block text-gray-300 hover:text-white transition-colors">Contact</Link>
+              {cmsFooterLinks.length > 0 ? cmsFooterLinks.map((link, i) => (
+                <Link key={i} to={link.url}
+                  className="block text-sm transition-opacity hover:opacity-100 opacity-80"
+                  style={{ color: 'var(--color-secondary)' }}>
+                  {link.label}
+                </Link>
+              )) : (
+                <>
+                  {[['About Us','/about'],['Apply Now','/apply'],['Gallery','/gallery'],['Results','/results'],['Contact','/contact']].map(([label, url]) => (
+                    <Link key={url} to={url}
+                      className="block text-sm transition-opacity hover:opacity-100 opacity-80"
+                      style={{ color: 'var(--color-secondary)' }}>
+                      {label}
+                    </Link>
+                  ))}
+                </>
+              )}
             </div>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Connect With Us</h4>
+            <h4 className="font-semibold mb-4" style={{ color: 'var(--color-secondary)' }}>Connect With Us</h4>
             <div className="flex gap-4 mb-4">
-              {facebook && <a href={facebook} className="text-gray-300 hover:text-white transition-colors"><FiFacebook size={20} /></a>}
-              {instagram && <a href={instagram} className="text-gray-300 hover:text-white transition-colors"><FiInstagram size={20} /></a>}
-              {twitter && <a href={twitter} className="text-gray-300 hover:text-white transition-colors"><FiTwitter size={20} /></a>}
-              {email && <a href={`mailto:${email}`} className="text-gray-300 hover:text-white transition-colors"><FiMail size={20} /></a>}
+              {facebook && <a href={facebook} className="transition-opacity hover:opacity-100 opacity-80" style={{ color: 'var(--color-secondary)' }}><FiFacebook size={20} /></a>}
+              {instagram && <a href={instagram} className="transition-opacity hover:opacity-100 opacity-80" style={{ color: 'var(--color-secondary)' }}><FiInstagram size={20} /></a>}
+              {twitter && <a href={twitter} className="transition-opacity hover:opacity-100 opacity-80" style={{ color: 'var(--color-secondary)' }}><FiTwitter size={20} /></a>}
+              {email && <a href={`mailto:${email}`} className="transition-opacity hover:opacity-100 opacity-80" style={{ color: 'var(--color-secondary)' }}><FiMail size={20} /></a>}
             </div>
-            <p className="text-gray-300 text-sm">Follow us for updates and school events</p>
+            <p className="text-sm opacity-80">Follow us for updates and school events</p>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+        <div className="mt-8 pt-8 text-center text-sm opacity-60" style={{ borderTop: '1px solid rgba(201,162,39,0.3)' }}>
           <p>&copy; {year} {schoolName}. All rights reserved.</p>
         </div>
       </div>

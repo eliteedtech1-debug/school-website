@@ -4,15 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#1e3a5f" />
+    <meta name="theme-color" content="%VITE_PRIMARY_COLOR%" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" href="/school.png" />
-    <link rel="apple-touch-icon" href="/school.png" />
 
-    <title>Dr. Kabiru Gwarzo Academy</title>
+    <!--
+      Favicon: uses VITE_APP_LOGO from .env (the school's badge_url).
+      Falls back to /favicon.png (public/favicon.png — same image copied locally).
+      Vite replaces %VITE_APP_LOGO% at build time.
+      In dev mode, if the URL is a remote https:// link it works directly;
+      if it's a local path (/assets/img/...) the dev server serves it.
+    -->
+    <link rel="icon" type="image/png" href="%VITE_APP_LOGO%" />
+    <link rel="apple-touch-icon" href="%VITE_APP_LOGO%" />
+
+    <title>%VITE_SCHOOL_NAME%</title>
   </head>
   <body>
     <div id="root"></div>

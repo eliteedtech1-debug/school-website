@@ -2,40 +2,10 @@ import { useState } from "react";
 import { FiPlay } from "react-icons/fi";
 import { FaRegEye } from "react-icons/fa";
 import SEO from "../components/SEO";
-import students from "../assets/students.png";
-import principal from "../assets/principal.png";
-import image from "../assets/image copy.png";
-import image2 from "../assets/image copy 2.png";
-import image3 from "../assets/image copy 3.png";
-import image4 from "../assets/image copy 4.png";
-import image5 from "../assets/image copy 5.png";
-import image6 from "../assets/image copy 6.png";
-import image7 from "../assets/image copy 7.png";
-import image9 from "../assets/image copy 9.png";
-import image10 from "../assets/image copy 10.png";
-import image12 from "../assets/image copy 12.png";
+
 import { motion } from "framer-motion";
 import { useWebsiteContent } from "../lib/useWebsiteContent";
 import { Skeleton, CardSkeleton, TextSkeleton } from "../components/Skeleton";
-
-const staticGalleryItems = [
-  { id: 1, title: "Students in the Classroom", category: "photos", type: "image", image: students, description: "Active learning environment" },
-  { id: 2, title: "The Principal", category: "photos", type: "image", image: principal, description: "School leadership" },
-  { id: 3, title: "School Assembly Event", category: "videos", type: "video", image: "https://img.youtube.com/vi/aJxsTF9eWRk/hqdefault.jpg", videoUrl: "https://www.youtube.com/embed/aJxsTF9eWRk", description: "Morning assembly highlights" },
-  { id: 4, title: "Cultural Day Celebration", category: "videos", type: "video", image: "https://img.youtube.com/vi/B8OSkSdo6R0/hqdefault.jpg", videoUrl: "https://www.youtube.com/embed/B8OSkSdo6R0", description: "Students in traditional attire" },
-  { id: 5, title: "", category: "videos", type: "video", image: "https://img.youtube.com/vi/rfs-4HaRMnM/hqdefault.jpg", videoUrl: "https://www.youtube.com/embed/rfs-4HaRMnM", description: "" },
-  { id: 6, title: "Pre-vocational Laboratory", category: "facilities", type: "image", image, description: "Science laboratory" },
-  { id: 7, title: "Annual Cultural Day", category: "videos", type: "video", image: "https://img.youtube.com/vi/77l2Juo0Mws/hqdefault.jpg", videoUrl: "https://www.youtube.com/embed/77l2Juo0Mws", description: "Students in traditional attire" },
-  { id: 8, title: "Graduation Ceremony", category: "events", type: "image", image: image2, description: "Students graduation day" },
-  { id: 9, title: "Graduation Ceremony", category: "events", type: "image", image: image3, description: "Students graduation day" },
-  { id: 10, title: "Pre-vocational Laboratory", category: "facilities", type: "image", image: image4, description: "Science laboratory" },
-  { id: 11, title: "Ceremony", category: "events", type: "image", image: image5, description: "Students for better things" },
-  { id: 12, title: "Students in the Classroom", category: "photos", type: "image", image: image6, description: "Active learning environment" },
-  { id: 13, title: "Graduation Ceremony", category: "events", type: "image", image: image7, description: "Students graduation day" },
-  { id: 14, title: "Graduation Ceremony", category: "events", type: "image", image: image9, description: "students graduation day" },
-  { id: 15, title: "Graduation Ceremony", category: "events", type: "image", image: image10, description: "Students graduation day" },
-  { id: 16, title: "In the Classroom", category: "facilities", type: "image", image: image12, description: "At quiz competition" },
-];
 
 const Gallery = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -62,8 +32,19 @@ const Gallery = () => {
   const cmsGalleryHero = parseStructured('gallery_hero');
   const heroData = cmsGalleryHero[0] || {};
   const cmsHighlights = parseStructured('gallery_highlights');
+  const cmsGalleryItems = parseStructured('gallery_items');
 
   // Transform API media to gallery items with category from caption
+  const structuredGalleryItems = cmsGalleryItems.map((item, idx) => ({
+    id: item._id || `item-${idx}`,
+    title: item.title || '',
+    category: item.category || 'photos',
+    type: item.type || (item.videoUrl ? 'video' : 'image'),
+    image: item.image || '',
+    videoUrl: item.videoUrl || null,
+    description: item.description || '',
+  }));
+
   const apiGalleryItems = galleryMedia.map((m, idx) => {
     const caption = m.caption || '';
     const isVideo = m.type === 'video' || m.url?.includes('youtube') || m.url?.includes('youtu.be');
@@ -82,7 +63,9 @@ const Gallery = () => {
     };
   });
 
-  const galleryItems = apiGalleryItems.length > 0 ? apiGalleryItems : staticGalleryItems;
+  const galleryItems = structuredGalleryItems.length > 0 ? structuredGalleryItems
+    : apiGalleryItems.length > 0 ? apiGalleryItems
+    : [];
 
   const categories = [
     { id: "all", name: "All" },
@@ -106,28 +89,7 @@ const Gallery = () => {
   const highlights = cmsHighlights.length > 0 ? cmsHighlights.map(h => ({
     ...h,
     points: typeof h.points === 'string' ? h.points.split('\n').filter(Boolean) : (h.points || []),
-  })) : [
-    {
-      title: "Modern Facilities",
-      color: "blue",
-      points: [
-        "Well-equipped classrooms with modern teaching aids",
-        "Science laboratories for practical learning",
-        "Computer lab with internet connectivity",
-        "Library with extensive collection of books",
-      ],
-    },
-    {
-      title: "Student Activities",
-      color: "red",
-      points: [
-        "Academic competitions and quiz programs",
-        "Cultural events and celebrations",
-        "Sports and physical education activities",
-        "Islamic studies and Tahfeez programs",
-      ],
-    },
-  ];
+  })) : [];
 
   const fadeUp = {
     hidden: { opacity: 0, y: 60 },
@@ -143,8 +105,8 @@ const Gallery = () => {
     <>
       <SEO
         title="Gallery"
-        description="Explore the Dr. Kabiru Gwarzo Academy photo and video gallery. See our campus facilities, students, staff, and school events."
-        keywords="school gallery, Kano school photos, campus facilities, school events, Dr Kabiru Gwarzo Academy pictures"
+        description="Explore our school photo and video gallery. See our campus, students, staff, and events."
+        keywords="school gallery, school photos, campus facilities, school events"
         canonicalPath="/gallery"
       />
     <div className="pt-16">

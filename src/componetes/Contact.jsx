@@ -4,20 +4,34 @@ import SEO from "../components/SEO";
 import { useWebsiteContent } from "../lib/useWebsiteContent";
 
 const Contact = () => {
-  const { meta, getParagraphs } = useWebsiteContent();
+  const { meta, getSection, getParagraphs } = useWebsiteContent();
   const contactParagraphs = getParagraphs('contact');
 
-  const address = meta?.address || "Address not configured";
-  const phone   = meta?.phone   || "Phone not configured";
-  const email   = meta?.email   || "Email not configured";
+  const parseStructured = (key) => {
+    const section = getSection(key);
+    if (!section) return [];
+    const paragraphs = typeof section.paragraphs === 'string'
+      ? JSON.parse(section.paragraphs)
+      : (section.paragraphs || []);
+    return paragraphs.map(p => {
+      try { return { ...JSON.parse(p.text), _id: p.id }; }
+      catch { return null; }
+    }).filter(Boolean);
+  };
+
+  const cmsInfoCards = parseStructured('contact_info');
+  const address = cmsInfoCards.find(c => c.type === 'address')?.text || meta?.address || "Address not configured";
+  const phone   = cmsInfoCards.find(c => c.type === 'phone')?.text   || meta?.phone   || "Phone not configured";
+  const email   = cmsInfoCards.find(c => c.type === 'email')?.text   || meta?.email   || "Email not configured";
+  const hours   = cmsInfoCards.find(c => c.type === 'hours')?.text   || "";
   const schoolName = meta?.school_name || "Our School";
 
   return (
     <>
       <SEO
         title="Contact Us"
-        description="Get in touch with Dr. Kabiru Gwarzo Academy. Find our address, phone numbers, email, and operating hours. We're here to help with admissions and inquiries."
-        keywords="contact Dr Kabiru Gwarzo Academy, Kano school address, school phone number, school email, admissions contact"
+        description="Get in touch with our school. Find our address, phone numbers, email, and operating hours."
+        keywords="contact us, school address, school phone number, school email"
         canonicalPath="/contact"
       />
     <div className="pt-16 bg-gray-50 dark:bg-gray-950 min-h-screen">
@@ -38,10 +52,16 @@ const Contact = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div className="grid md:grid-cols-2 gap-12">
           <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="space-y-6">
-            <InfoCard icon={<FiMapPin />} title="Address" text={address} />
-            <InfoCard icon={<FiClock />} title="School Hours" text={`Mon–Thu: 7:30am – 1:15pm\nFriday: 7:30am – 12:00pm`} />
-            <InfoCard icon={<FiPhone />} title="Phone" text={phone} />
-            <InfoCard icon={<FiMail />} title="Email" text={email} />
+            {cmsInfoCards.length > 0 ? cmsInfoCards.map((card, i) => (
+              <InfoCard key={i} icon={<FiMapPin />} title={card.title || card.type} text={card.text || ''} />
+            )) : (
+              <>
+                <InfoCard icon={<FiMapPin />} title="Address" text={address} />
+                <InfoCard icon={<FiClock />} title="School Hours" text={hours} />
+                <InfoCard icon={<FiPhone />} title="Phone" text={phone} />
+                <InfoCard icon={<FiMail />} title="Email" text={email} />
+              </>
+            )}
           </motion.div>
 
           <motion.div
@@ -50,7 +70,12 @@ const Contact = () => {
             transition={{ duration: 0.6 }}
             className="bg-white/70 dark:bg-gray-900 border border-gray-600 backdrop-blur-xl rounded-2xl p-8"
           >
-            <h2 className="text-2xl font-bold mb-6 text-blue-950 dark:text-yellow-400">Send a Message</h2>
+            <h2 className="text-2xl font-bold mb-6 text-blue-950 dark:text-yellow-400">
+              {getSection('contact_form')?.title || 'Send a Message'}
+            </h2>
+            {getParagraphs('contact_form')[0]?.text && (
+              <p className="text-gray-600 dark:text-gray-300 mb-6 -mt-4">{getParagraphs('contact_form')[0].text}</p>
+            )}
             <form className="space-y-5">
               <Input placeholder="Your Name" />
               <Input type="email" placeholder="Your Email" />

@@ -1,0 +1,26 @@
+const BASE = 'https://files.eliteedu.tech/uploads';
+
+export const ASSETS = {
+  school:       `${BASE}/school_1783355004_6a4bd67ceb3d8.png`,
+  principal:    `${BASE}/principal_1783354939_6a4bd63b80d19.png`,
+  bursay:       `${BASE}/bursay_1783354856_6a4bd5e87d6fa.png`,
+  teacher:      `${BASE}/teacher_1783355055_6a4bd6af1c6f8.png`,
+  officer:      `${BASE}/officer_1783354928_6a4bd63037905.png`,
+  officer2:     `${BASE}/officer2_1783354934_6a4bd63668aea.png`,
+  chairman:     `${BASE}/chairman_1783354865_6a4bd5f14ffee.jpg`,
+  students:     `${BASE}/students_1783355014_6a4bd68669488.png`,
+  image:        `${BASE}/image_1783354924_6a4bd62c58952.png`,
+  imageCopy:    `${BASE}/image%20copy_1783354920_6a4bd62880bb3.png`,
+  imageCopy2:   `${BASE}/image%20copy%202_1783354890_6a4bd60a582d0.png`,
+  imageCopy3:   `${BASE}/image%20copy%203_1783354892_6a4bd60ce5118.png`,
+  imageCopy4:   `${BASE}/image%20copy%204_1783354898_6a4bd6121f6cd.png`,
+  imageCopy5:   `${BASE}/image%20copy%205_1783354903_6a4bd6171f61d.png`,
+  imageCopy6:   `${BASE}/image%20copy%206_1783354907_6a4bd61b80f82.png`,
+  imageCopy7:   `${BASE}/image%20copy%207_1783354911_6a4bd61f37879.png`,
+  imageCopy8:   `${BASE}/image%20copy%208_1783354914_6a4bd6225648a.png`,
+  imageCopy9:   `${BASE}/image%20copy%209_1783354917_6a4bd625e2668.png`,
+  imageCopy10:  `${BASE}/image%20copy%2010_1783354866_6a4bd5f24ff34.png`,
+  imageCopy11:  `${BASE}/image%20copy%2011_1783354869_6a4bd5f506db6.png`,
+  imageCopy12:  `${BASE}/image%20copy%2012_1783354873_6a4bd5f955318.png`,
+  imageCopy13:  `${BASE}/image%20copy%2013_1783354886_6a4bd6060c54e.png`,
+};

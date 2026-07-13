@@ -1,8 +1,8 @@
 import { Helmet } from 'react-helmet-async';
 
-const SITE_NAME = 'Dr. Kabiru Gwarzo Academy';
-const SITE_URL = 'https://kirmaskngovschools.com';
-const DEFAULT_DESC = 'Dr. Kabiru Gwarzo Academy — Excellence in Education. A premier secondary school nurturing future leaders through quality academics, character development, and holistic education.';
+const FALLBACK_SITE_NAME = import.meta.env.VITE_SCHOOL_NAME || 'Our School';
+const FALLBACK_SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
+const DEFAULT_DESC = 'Educational institution committed to academic excellence and character development.';
 const DEFAULT_OG_IMAGE = '/school.png';
 
 const SEO = ({
@@ -14,8 +14,10 @@ const SEO = ({
   canonicalPath = '',
   jsonld,
 }) => {
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
-  const canonical = canonicalPath ? `${SITE_URL}${canonicalPath}` : SITE_URL;
+  const siteName = import.meta.env.VITE_SCHOOL_NAME || FALLBACK_SITE_NAME;
+  const siteUrl = import.meta.env.VITE_SITE_URL || FALLBACK_SITE_URL;
+  const fullTitle = title ? `${title} | ${siteName}` : siteName;
+  const canonical = canonicalPath ? `${siteUrl}${canonicalPath}` : siteUrl;
 
   return (
     <Helmet>
@@ -30,7 +32,7 @@ const SEO = ({
       <meta property="og:image" content={ogImage} />
       <meta property="og:url" content={canonical} />
       <meta property="og:type" content={ogType} />
-      <meta property="og:site_name" content={SITE_NAME} />
+      <meta property="og:site_name" content={siteName} />
       <meta property="og:locale" content="en_US" />
 
       <meta name="twitter:card" content="summary_large_image" />
@@ -45,17 +47,4 @@ const SEO = ({
   );
 };
 
-const OrganizationSchema = () => (
-  <script type="application/ld+json">{JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'EducationalOrganization',
-    name: SITE_NAME,
-    url: SITE_URL,
-    logo: `${SITE_URL}/school.png`,
-    description: DEFAULT_DESC,
-    address: { '@type': 'PostalAddress', addressLocality: 'Kano', addressCountry: 'NG' },
-  })}</script>
-);
-
-export { SEO, OrganizationSchema };
 export default SEO;

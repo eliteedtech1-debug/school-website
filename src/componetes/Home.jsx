@@ -14,11 +14,7 @@ import {
 import { FaGraduationCap, FaPray, FaHandsHelping } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import SEO from "../components/SEO";
-import logo from "../assets/school.png";
-import image3 from "../assets/image copy 3.png";
-import image4 from "../assets/image copy 4.png";
-import image5 from "../assets/image copy 5.png";
-import principal from "../assets/principal.png";
+
 import { useState, useEffect } from "react";
 import StoryScreen from "./StoryScreen";
 import CountUp from "./layout/CountUp";
@@ -66,7 +62,6 @@ const staggerContainer = {
   },
 };
 
-const images = [image3, image4, image5];
 const Home = () => {
   const [index, setIndex] = useState(0);
   const [applyOpen, setApplyOpen] = useState(false);
@@ -77,9 +72,9 @@ const Home = () => {
   const address    = meta?.address || "";
   const logoUrl    = meta?.logo_url || null;
 
-  // CMS overrides — fall back to hardcoded if section not configured
+  // CMS overrides
   const heroImages     = getMedia('hero');
-  const carouselImages = heroImages.length > 0 ? heroImages.map(m => m.url) : images;
+  const carouselImages = heroImages.length > 0 ? heroImages.map(m => m.url) : [];
   const heroTitle      = getSection('hero')?.title || null;
   const heroParagraphs = getParagraphs('hero');
   const welcomeParagraphs = getParagraphs('welcome');
@@ -107,38 +102,28 @@ const Home = () => {
   const cmsFeatures = parseStructured('features');
   const cmsPrograms = parseStructured('programs');
   const cmsEvents = parseStructured('events');
+  const cmsStats = parseStructured('home_stats');
+  const cmsStreams = parseStructured('home_streams');
   const cmsProgramsSection = getSection('programs');
 
   useEffect(() => {
+    if (carouselImages.length === 0) return;
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % carouselImages.length);
     }, 5000);
     return () => clearInterval(interval);
   }, [carouselImages.length]);
 
-  // Dynamic data from CMS (with hardcoded fallbacks)
+  // Only use CMS data - no hardcoded fallbacks
   const features = cmsFeatures.length > 0
     ? cmsFeatures.map(f => ({
         icon: resolveIcon(f.icon),
         title: f.title,
         description: f.description,
       }))
-    : [
-        { icon: <FiBookOpen className="w-8 h-8" />, title: "Quality Education", description: "Pre-Nursery to SS3 with Science, Arts & Commercial streams plus comprehensive Islamic studies" },
-        { icon: <FiUsers className="w-8 h-8" />, title: "Islamic Studies & Tahfeez", description: "Complete Islamiyya and Tahfeez programs integrated with modern curriculum" },
-        { icon: <FiAward className="w-8 h-8" />, title: "Excellence & Innovation", description: "QR ID cards, e-Form registrations, and commitment to academic excellence" },
-      ];
+    : [];
 
-  const programs = cmsPrograms.length > 0
-    ? cmsPrograms
-    : [
-        { level: "Pre-Nursery", grades: "1-2", time: "Mon-Thu: 7:30am-12:30pm,Fri: 7:30am-12:00pm" },
-        { level: "Primary", grades: "1-5", time: "Mon-Thu: 7:30am-1:15pm, Fri: 7:30am-12:00pm" },
-        { level: "Junior Secondary", grades: "JSS 1-3", time: "Mon-Thu: 7:30am-1:15pm, Fri: 7:30am-12:00pm" },
-        { level: "Senior Secondary", grades: "SS 1-3 (Science, Arts, Commercial)", time: "Mon-Thu: 7:30am-1:15pm, Fri: 7:30am-12:00pm" },
-        { level: "Islamiyya", grades: "All Levels", time: "Mon-Thu: 2:30pm-5:00pm" },
-        { level: "Tahfeez", grades: "All Levels", time: "Mon-Thu: 9:00am-5:00pm" },
-      ];
+  const programs = cmsPrograms;
 
   const currentEvents = cmsEvents.length > 0
     ? cmsEvents.map(e => ({
@@ -147,59 +132,19 @@ const Home = () => {
         description: e.description,
         color: eventColorMap[e.color] || eventColorMap.blue,
       }))
-    : [
-        { title: "2025/2026 Session e-Application Form", status: "NOW ON SALE!", description: "Get your application form for the upcoming academic session", color: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800" },
-        { title: "2024/2025 Session Registration", status: "ONGOING", description: "Registration for current session is still ongoing", color: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800" },
-        { title: "Employment Opportunities", status: "AVAILABLE", description: "Academic Staff, NYSC Corps Members and IT Students needed", color: "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800" },
-      ];
+    : [];
 
-  const stats = [
-    {
-      icon: <FiUsers className="w-6 h-6" />,
-      number: <CountUp from={10} to={500} duration={1} />,
-      label: "Students",
-      description: "Enrolled across all programs",
-    },
-    {
-      icon: <FiAward className="w-6 h-6" />,
-      number: <CountUp from={0} to={15} duration={1} />,
-      label: "Years Experience",
-      description: "Of educational excellence",
-    },
-    {
-      icon: <FiBookOpen className="w-6 h-6" />,
-      number: <CountUp from={0} to={6} duration={1} />,
-      label: "Programs",
-      description: "Comprehensive curriculum",
-    },
-    {
-      icon: <FaGraduationCap className="w-6 h-6" />,
-      number: <CountUp from={0} to={50} duration={1} />,
-      label: "Graduates",
-      description: "Success stories annually",
-    },
-  ];
+  const stats = cmsStats.length > 0
+    ? cmsStats.map(s => ({
+        icon: resolveIcon(s.icon),
+        number: <CountUp from={0} to={parseInt(s.value) || 0} duration={1} />,
+        label: s.label,
+        description: s.description || '',
+        suffix: s.suffix || '+',
+      }))
+    : [];
 
-  const academicStreams = [
-    {
-      title: "Science Stream",
-      icon: "🔬",
-      description: "Advanced scientific education with modern laboratories",
-      subjects: ["Physics", "Chemistry", "Biology", "Mathematics"],
-    },
-    {
-      title: "Arts Stream", 
-      icon: "🎨",
-      description: "Creative and humanities-focused curriculum",
-      subjects: ["Literature", "History", "Government", "CRS/IRS"],
-    },
-    {
-      title: "Commercial Stream",
-      icon: "💼", 
-      description: "Business and commerce education",
-      subjects: ["Accounting", "Economics", "Commerce", "Marketing"],
-    },
-  ];
+  const academicStreams = cmsStreams;
 
   const coreValues = cmsCoreValues.length > 0
     ? cmsCoreValues.map(v => ({
@@ -207,28 +152,15 @@ const Home = () => {
         title: v.title,
         description: v.description,
       }))
-    : [
-        { icon: <FiTarget className="w-8 h-8" />, title: "Excellence", description: "Striving for the highest standards in education and character development" },
-        { icon: <FiHeart className="w-8 h-8" />, title: "Islamic Values", description: "Integrating Islamic principles with modern education for holistic development" },
-        { icon: <FiStar className="w-8 h-8" />, title: "Innovation", description: "Embracing technology and modern teaching methods for effective learning" },
-      ];
+    : [];
 
   return (
     <>
       <SEO
         title="Home"
-        description="Dr. Kabiru Gwarzo Academy — Excellence in Education. A premier secondary school in Kano offering quality academics, Islamiyyah, and Tahfeez programs."
-        keywords="Dr. Kabiru Gwarzo Academy, Kano school, secondary school, Islamiyyah, Tahfeez, Quran memorization, Nigeria education"
+        description={meta?.description || "Welcome to our school — Excellence in Education."}
+        keywords={meta?.keywords || "school, education, academic excellence"}
         canonicalPath="/"
-        jsonld={{
-          '@context': 'https://schema.org',
-          '@type': 'EducationalOrganization',
-          name: 'Dr. Kabiru Gwarzo Academy',
-          url: 'https://kirmaskngovschools.com',
-          logo: 'https://kirmaskngovschools.com/school.png',
-          description: 'Premier secondary school in Kano offering quality academics, Islamiyyah, and Tahfeez programs.',
-          address: { '@type': 'PostalAddress', addressLocality: 'Kano', addressCountry: 'NG' },
-        }}
       />
     <div className="pt-20">
       {/* Hero Section */}
@@ -272,18 +204,11 @@ const Home = () => {
           {/* 🔹 النص */}
           <div className="relative z-20 flex items-center justify-center h-full">
             <div className="max-w-7xl mx-auto px-4 text-center">
-              {logoUrl ? (
+              {logoUrl && (
                 <motion.img
                   src={logoUrl}
                   alt={schoolName}
                   className="w-28 h-28 mx-auto mb-6 rounded-xl object-cover"
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                />
-              ) : (
-                <motion.img
-                  src={logo}
-                  className="w-28 h-28 mx-auto mb-6"
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 />
@@ -327,22 +252,25 @@ const Home = () => {
             </div>
           </div>
 
-          {/* 🔹 أزرار التحكم */}
-          <button
-            onClick={() =>
-              setIndex((index - 1 + images.length) % images.length)
-            }
-            className="absolute  left-4 top-1/2 -translate-y-1/2 z-30 text-4xl"
-          >
-            ❮
-          </button>
+          {carouselImages.length > 1 && (
+            <>
+              <button
+                onClick={() =>
+                  setIndex((index - 1 + carouselImages.length) % carouselImages.length)
+                }
+                className="absolute  left-4 top-1/2 -translate-y-1/2 z-30 text-4xl"
+              >
+                ❮
+              </button>
 
-          <button
-            onClick={() => setIndex((index + 1) % images.length)}
-            className="absolute  right-4 top-1/2 -translate-y-1/2 z-30 text-4xl"
-          >
-            ❯
-          </button>
+              <button
+                onClick={() => setIndex((index + 1) % carouselImages.length)}
+                className="absolute  right-4 top-1/2 -translate-y-1/2 z-30 text-4xl"
+              >
+                ❯
+              </button>
+            </>
+          )}
         </motion.div>
         )}
       </section>
@@ -374,12 +302,8 @@ const Home = () => {
                 ? welcomeParagraphs.map(p => (
                     <p key={p.id} className="text-lg mb-4 leading-relaxed">{p.text}</p>
                   ))
-                : <p className="text-lg mb-6 leading-relaxed">"At Dr. Kabiru Gwarzo Academy, we are committed to nurturing young minds through a perfect blend of modern education and Islamic values. Our mission is to develop well-rounded individuals who excel academically while maintaining strong moral foundations."</p>
+                : null
               }
-              <div className="mb-6">
-                <h4 className="font-semibold text-blue-950 dark:text-yellow-400">Adamu Muhammad Alkali</h4>
-                <p className="text-gray-600 dark:text-gray-400">Principal</p>
-              </div>
               <Link
                 to="/about"
                 className="inline-flex items-center gap-2 bg-blue-950 dark:bg-yellow-400 text-white dark:text-blue-950 px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
@@ -393,11 +317,13 @@ const Home = () => {
               viewport={{ once: true }}
               className="relative"
             >
-              <img
-                src={welcomeImage || principal}
-                alt="Principal"
-                className="w-full max-w-md mx-auto rounded-lg shadow-xl"
-              />
+              {welcomeImage && (
+                <img
+                  src={welcomeImage}
+                  alt="Welcome"
+                  className="w-full max-w-md mx-auto rounded-lg shadow-xl"
+                />
+              )}
               <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-yellow-400 rounded-full flex items-center justify-center">
                 <FaGraduationCap className="w-12 h-12 text-blue-950" />
               </div>
@@ -437,7 +363,7 @@ const Home = () => {
                   {stat.icon}
                 </div>
                 <div className="text-3xl font-bold text-yellow-400 mb-2">
-                  {stat.number}+
+                  {stat.number}{stat.suffix}
                 </div>
                 <h3 className="font-semibold text-lg mb-1">{stat.label}</h3>
                 <p className="text-sm opacity-80">{stat.description}</p>

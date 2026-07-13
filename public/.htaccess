@@ -1,0 +1,9 @@
+RewriteEngine On
+RewriteBase /
+
+# If an existing file or directory is requested, serve it directly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Otherwise, route everything to index.html (SPA fallback for client-side routing)
+RewriteRule ^ index.html [QSA,L]

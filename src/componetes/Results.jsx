@@ -3,6 +3,7 @@ import { FiSearch, FiAlertCircle, FiCheckCircle, FiDownload } from 'react-icons/
 import { motion } from 'framer-motion';
 import { pdf } from '@react-pdf/renderer';
 import SEO from "../components/SEO";
+import { useWebsiteContent } from "../lib/useWebsiteContent";
 import EndOfTermReportTemplate from '@elscholar-ui/feature-module/academic/examinations/exam-results/EndOfTermReportTemplate';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -49,11 +50,29 @@ const generateYearTerms = () => {
 };
 
 const Results = () => {
+  const { meta, getSection, getParagraphs } = useWebsiteContent();
   const [studentId, setStudentId] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
+
+  const parseStructured = (key) => {
+    const section = getSection(key);
+    if (!section) return [];
+    const paragraphs = typeof section.paragraphs === 'string'
+      ? JSON.parse(section.paragraphs)
+      : (section.paragraphs || []);
+    return paragraphs.map(p => {
+      try { return { ...JSON.parse(p.text), _id: p.id }; }
+      catch { return null; }
+    }).filter(Boolean);
+  };
+
+  const cmsExamConfig = parseStructured('exam_config');
+  const examConfig = cmsExamConfig[0] || {};
+  const cmsHero = parseStructured('exam_results_hero');
+  const examHero = cmsHero[0] || {};
 
   const yearTerms = useMemo(() => generateYearTerms(), []);
   const defaultTerm = useMemo(() => {
@@ -137,12 +156,12 @@ const Results = () => {
       class_name: first?.class_name || '',
     };
     const schoolInfo = {
-      school_name: import.meta.env.VITE_SCHOOL_NAME || 'School Name',
-      badge_url: null,
-      school_motto: 'Excellence in Education',
-      primary_contact: '',
-      email_address: '',
-      address: '',
+      school_name: meta?.school_name || import.meta.env.VITE_SCHOOL_NAME || 'School Name',
+      badge_url: meta?.logo_url || null,
+      school_motto: examConfig.motto || meta?.tagline || 'Excellence in Education',
+      primary_contact: meta?.phone || '',
+      email_address: meta?.email || '',
+      address: meta?.address || '',
     };
     const defaultGradeBoundaries = [
       { grade: 'A', min_percentage: 80, max_percentage: 100, remark: 'Excellent' },
@@ -217,9 +236,9 @@ const Results = () => {
   return (
     <>
       <SEO
-        title="Results Checker"
-        description="Check your examination results for Dr. Kabiru Gwarzo Academy. Enter your student ID to view and download your end-of-term results."
-        keywords="exam results, check results, student results, Dr Kabiru Gwarzo Academy results, school results checker"
+        title={examHero.title || 'Results Checker'}
+        description={examHero.description || 'Check your examination results. Enter your student ID to view your results.'}
+        keywords="exam results, check results, student results"
         canonicalPath="/results"
       />
     <div className="pt-16">
@@ -234,10 +253,10 @@ const Results = () => {
         <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-yellow-300/10 rounded-full blur-3xl" />
         <div className="relative z-10 max-w-4xl mx-auto px-6">
           <h1 className="text-4xl md:text-5xl font-extrabold mb-6 text-yellow-400">
-            Results Checker
+            {examHero.title || 'Results Checker'}
           </h1>
           <p className="text-lg md:text-xl text-blue-100">
-            Check your examination results securely
+            {examHero.subtitle || 'Enter your admission number to check your results'}
           </p>
         </div>
       </motion.section>

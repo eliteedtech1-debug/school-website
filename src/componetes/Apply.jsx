@@ -10,9 +10,11 @@ import {
   FiCheck,
 } from "react-icons/fi";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 import SEO from "../components/SEO";
 import { useWebsiteContent } from "../lib/useWebsiteContent";
 import { Skeleton, CardSkeleton } from "../components/Skeleton";
+import api from "../lib/axios";
 
 const Apply = () => {
   const { getSection, getParagraphs, loading } = useWebsiteContent();
@@ -58,12 +60,11 @@ const Apply = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await api.post('/public/applications', formData);
       setIsSubmitting(false);
       setSubmitSuccess(true);
-
-      // Reset form after 3 seconds
+      toast.success('Application submitted successfully!');
       setTimeout(() => {
         setSubmitSuccess(false);
         setFormData({
@@ -81,7 +82,10 @@ const Apply = () => {
           notes: "",
         });
       }, 3000);
-    }, 1500);
+    } catch (err) {
+      setIsSubmitting(false);
+      toast.error(err.response?.data?.message || 'Failed to submit application. Please try again.');
+    }
   };
 
   const fadeUp = {
@@ -93,8 +97,8 @@ const Apply = () => {
     <>
       <SEO
         title="Admissions"
-        description="Apply for admission to Dr. Kabiru Gwarzo Academy. Easy online application process for Nursery, Primary, Junior Secondary, and Senior Secondary programs."
-        keywords="admissions, apply to school, Kano school admission, online application, enrollment, Dr Kabiru Gwarzo Academy admission"
+        description="Apply for admission. Easy online application process for all grade levels."
+        keywords="admissions, apply to school, online application, enrollment"
         canonicalPath="/apply"
       />
     <div className="pt-16">

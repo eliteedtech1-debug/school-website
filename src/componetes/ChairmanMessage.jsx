@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import chairman from "../assets/chairman.jpg";
 import { useWebsiteContent } from "../lib/useWebsiteContent";
 
 const ChairmanMessage = () => {
@@ -19,20 +18,10 @@ const ChairmanMessage = () => {
   const motto         = titleParts[2] || tagline;
 
   const photoMedia    = getMedia('chairman');
-  const photoUrl      = photoMedia[0]?.url || chairman;
+  const photoUrl      = photoMedia[0]?.url || null;
   const paragraphs    = getParagraphs('chairman');
 
-  const defaultBody = [
-    `Dear Parents, Students, and Esteemed Community Members,`,
-    `It is my great pleasure to welcome you to the official website of <strong>${schoolName}</strong>. Our institution stands as a beacon of academic integrity, moral values, and educational innovation.`,
-    `Since our founding, we have remained dedicated to providing a balanced education that nurtures intellectual growth, discipline, and character.`,
-    `We continuously embrace modern technologies, including digital student identification systems and online admissions, to ensure efficiency, security, and accessibility.`,
-    `Our success is reflected in the achievements of our students and the trust of parents who believe in our mission.`,
-    `I invite you to explore our website, engage with our community, and join us in shaping a brighter future for the next generation.`,
-    `Together, we strive for excellence.`,
-  ];
-
-  const bodyParagraphs = paragraphs.length > 0 ? paragraphs : defaultBody;
+  const bodyParagraphs = paragraphs.length > 0 ? paragraphs : [];
 
   return (
     <section className="bg-white dark:bg-gray-950 py-24">

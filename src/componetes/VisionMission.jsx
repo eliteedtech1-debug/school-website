@@ -43,11 +43,7 @@ export default function VisionMission() {
         title: v.title,
         description: v.description,
       }))
-    : [
-        { icon: <Star className="w-6 h-6" />, title: "Excellence", description: "Striving for the highest standards in academics and character" },
-        { icon: <Users className="w-6 h-6" />, title: "Integrity", description: "Upholding honesty and ethical principles in all actions" },
-        { icon: <BookOpen className="w-6 h-6" />, title: "Knowledge", description: "Pursuing academic excellence and lifelong learning" },
-      ];
+    : [];
 
   return (
     <section className="py-20">
@@ -100,18 +96,22 @@ export default function VisionMission() {
                 {vision?.title || "Our Vision"}
               </h3>
 
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
-                {vision?.description || "To be the leading educational institution that produces visionary leaders who excel academically, uphold strong moral values, and contribute positively to society."}
-              </p>
+              {vision?.description && (
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+                  {vision.description}
+                </p>
+              )}
 
-              <div className="space-y-3">
-                {(vision?.points || ["Holistic development of students", "Academic excellence with moral values", "Innovation in education", "Global leadership mindset"]).map((point, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-950 dark:bg-yellow-400"></div>
-                    <span className="text-gray-700 dark:text-gray-300">{point}</span>
-                  </div>
-                ))}
-              </div>
+              {vision?.points && vision.points.length > 0 && (
+                <div className="space-y-3">
+                  {vision.points.map((point, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-blue-950 dark:bg-yellow-400"></div>
+                      <span className="text-gray-700 dark:text-gray-300">{point}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {(vision?.quote) && (
                 <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
@@ -150,18 +150,22 @@ export default function VisionMission() {
                 {mission?.title || "Our Mission"}
               </h3>
 
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
-                {mission?.description || "To provide quality education that integrates academic excellence with strong moral values, fostering an environment where students develop critical thinking, creativity, and character."}
-              </p>
+              {mission?.description && (
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+                  {mission.description}
+                </p>
+              )}
 
-              <div className="space-y-3">
-                {(mission?.points || ["Quality education for all", "Moral and ethical development", "Modern teaching methods", "Community engagement"]).map((point, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-950 dark:bg-yellow-400"></div>
-                    <span className="text-gray-700 dark:text-gray-300">{point}</span>
-                  </div>
-                ))}
-              </div>
+              {mission?.points && mission.points.length > 0 && (
+                <div className="space-y-3">
+                  {mission.points.map((point, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-blue-950 dark:bg-yellow-400"></div>
+                      <span className="text-gray-700 dark:text-gray-300">{point}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {(mission?.quote) && (
                 <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">

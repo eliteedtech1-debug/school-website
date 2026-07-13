@@ -9,13 +9,7 @@ import {
 } from "react-icons/fi";
 import { FaGraduationCap, FaBookOpen, FaPray, FaHandsHelping } from "react-icons/fa";
 import SEO from "../components/SEO";
-import image from "../assets/image copy 13.png";
-import principal from "../assets/principal.png";
-import bursay from "../assets/bursay.png";
-import teacher from "../assets/teacher.png";
-import officer from "../assets/officer.png";
-import officer2 from "../assets/officer2.png";
-import imge from "../assets/image.png";
+
 import CountUp from "../componetes/layout/CountUp";
 import { useWebsiteContent } from "../lib/useWebsiteContent";
 import { motion } from "framer-motion";
@@ -71,21 +65,11 @@ const About = () => {
   const heroData = cmsHero[0] || {};
   const keyPoints = cmsKeyPoints.length > 0
     ? cmsKeyPoints.map(k => k.text)
-    : [
-        "Quality Education with Moral Values",
-        "Comprehensive Academic Curriculum",
-        "Islamic & Moral Education Integration",
-        "Innovative Teaching Methods",
-        "Dedicated Qualified Teachers",
-        "Technology-Enhanced Learning",
-      ];
+    : [];
 
   const floatingStats = cmsFloatingStats.length > 0
     ? cmsFloatingStats
-    : [
-        { number: "15+", label: "Years of Excellence" },
-        { number: "A+", label: "Rated Institution" },
-      ];
+    : [];
 
   const stats = cmsStats.length > 0
     ? cmsStats.map(s => ({
@@ -94,35 +78,17 @@ const About = () => {
         label: s.label,
         description: s.description,
       }))
-    : [
-        { icon: <FiUsers className="w-6 h-6" />, number: <CountUp from={10} to={500} separator="," direction="up" duration={1} className="count-up-text" />, label: "Students", description: "Enrolled across all programs" },
-        { icon: <FiAward className="w-6 h-6" />, number: <CountUp from={200} to={15} separator="," direction="up" duration={1} className="count-up-text" />, label: "Years Experience", description: "Of educational excellence" },
-        { icon: <FiClock className="w-6 h-6" />, number: <CountUp from={100} to={6} separator="," direction="up" duration={1} className="count-up-text" />, label: "Programs", description: "Comprehensive curriculum" },
-        { icon: <FaGraduationCap className="w-6 h-6" />, number: <CountUp from={0} to={50} separator="," direction="up" duration={1} className="count-up-text" />, label: "Graduates", description: "Success stories annually" },
-      ];
+    : [];
 
   const managementStaff = cmsStaff.length > 0
     ? cmsStaff
-    : [
-        { name: "Adamu Muhammad Alkali", position: "Principal", image: principal },
-        { name: "Ummi Abubakar", position: "School Bursary", image: bursay },
-        { name: "Faruk Hamza Adam", position: "Head Teacher", image: teacher },
-        { name: "Buhari Haruna Idris", position: "Examination Officer", image: officer },
-        { name: "Khadija Hamza Adam", position: "Asst. Examination Officer", image: officer2 },
-        { name: "Imam Lawal Abubakar", position: "CEO A.I. Softwares Solutions", image: imge },
-      ];
+    : [];
 
   const programs = cmsPrograms.length > 0
     ? cmsPrograms
-    : [
-        { title: "Early Years", icon: "👶", items: ["Pre-Nursery 1-2", "Primary 1-5", "JSS 1-3"], description: "Foundation building for young learners" },
-        { title: "Science Stream", icon: "🔬", items: ["SS 1 Science", "SS 2 Science", "SS 3 Science"], description: "Advanced scientific education with modern laboratories" },
-        { title: "Arts Stream", icon: "🎨", items: ["SS 1 Arts", "SS 2 Arts", "SS 3 Arts"], description: "Creative and humanities-focused curriculum" },
-        { title: "Commercial Stream", icon: "💼", items: ["SS 1 Commercial", "SS 2 Commercial", "SS 3 Commercial"], description: "Business and commerce education" },
-        { title: "Islamic Studies", icon: "☪️", items: ["Islamiyya (All Levels)", "Tahfeez Program"], description: "Comprehensive Islamic education" },
-      ];
+    : [];
 
-  const bannerText = bannerParagraph[0]?.text || "Complete curriculum with modern teaching methodologies";
+  const bannerText = bannerParagraph[0]?.text || "";
 
   const fadeUp = {
     hidden: { opacity: 0, y: 60 },
@@ -138,8 +104,8 @@ const About = () => {
     <>
       <SEO
         title="About Us"
-        description="Learn about Dr. Kabiru Gwarzo Academy — our mission, vision, values, and experienced leadership team committed to academic excellence and character development."
-        keywords="about Dr Kabiru Gwarzo Academy, school mission vision, Kano school leadership, our team, school history"
+        description="Learn about our school — our mission, vision, values, and leadership team."
+        keywords="about us, school mission vision, our team, school history"
         canonicalPath="/about"
       />
     <div className="pt-16 dark:bg-gray-950">
@@ -162,12 +128,13 @@ const About = () => {
           ) : (
             <>
               <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
-                {heroData.title || "Welcome to"} <br />
-                <span className="text-yellow-400">{heroData.subtitle || "Our Academic Community"}</span>
+                <span className="text-yellow-400">{heroData.title || "About Us"}</span>
               </h1>
-              <p className="mt-6 text-lg md:text-xl text-blue-100">
-                {heroData.tagline || "Building knowledge, discipline, and excellence for a brighter future."}
-              </p>
+              {heroData.tagline && (
+                <p className="mt-6 text-lg md:text-xl text-blue-100">
+                  {heroData.tagline}
+                </p>
+              )}
               <div className="mt-10 flex justify-center gap-4 flex-wrap">
                 <Link to="/gallery">
                   <button className="px-8 py-3 font-bold rounded-full border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-blue-950 transition">
@@ -198,10 +165,11 @@ const About = () => {
           <>
             <div className="text-center text-4xl font-semibold">
               <h1 className="mb-6">{getSection('about')?.title || 'About Our School'}</h1>
-            </div>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-5xl mx-auto">
-              {aboutParagraphs[0]?.text || 'We are committed to nurturing the mind, body, and spirit of every student through holistic education.'}
-            </p>
+            </div>              {aboutParagraphs[0]?.text && (
+                <p className="text-lg text-gray-600 dark:text-gray-300 max-w-5xl mx-auto">
+                  {aboutParagraphs[0]?.text}
+                </p>
+              )}
             <div className="grid lg:grid-cols-2 gap-12 items-center pt-28 pb-8">
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
@@ -211,11 +179,17 @@ const About = () => {
                 className="relative"
               >
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                  <img
-                    src={aboutImage || image}
-                    alt="School Campus"
-                    className="w-full h-[500px] object-cover"
-                  />
+                  {aboutImage ? (
+                <img
+                  src={aboutImage}
+                  alt="School Campus"
+                  className="w-full h-[500px] object-cover"
+                />
+              ) : (
+                <div className="w-full h-[500px] bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center">
+                  <span className="text-gray-400 text-lg">Campus Image</span>
+                </div>
+              )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                 </div>
                 {floatingStats.map((stat, i) => (
@@ -239,30 +213,17 @@ const About = () => {
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
                 <div className="space-y-6 text-gray-700 dark:text-gray-300">
-                  {aboutParagraphs.length > 1
-                    ? aboutParagraphs.slice(1).map(p => (
-                        <p key={p.id} className="text-lg leading-relaxed">{p.text}</p>
-                      ))
-                    : <>
-                        <p className="text-lg leading-relaxed">
-                          <span className="font-semibold text-gray-900 dark:text-white">
-                            Dr. Kabiru Gwarzo Academy &amp; Tahfeez
-                          </span>{" "}
-                          is a reputable educational institution committed to nurturing young minds through quality education, strong moral values, and academic excellence.
-                        </p>
-                        <p className="text-lg leading-relaxed">
-                          Founded with the vision of building future leaders, our school provides a balanced and inclusive learning environment where students grow intellectually, spiritually, and socially.
-                        </p>
-                      </>
-                  }
+                  {aboutParagraphs.slice(1).map(p => (
+                    <p key={p.id} className="text-lg leading-relaxed">{p.text}</p>
+                  ))}
 
                   {/* Key Points */}
                   <div className="space-y-4 my-8">
-                    {keyPoints.map((point, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <li className="text-gray-800 dark:text-gray-200">{point}</li>
-                      </div>
-                    ))}
+                    {keyPoints.length > 0 && keyPoints.map((point, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <li className="text-gray-800 dark:text-gray-200">{point}</li>
+                    </div>
+                  ))}
                   </div>
                 </div>
               </motion.div>

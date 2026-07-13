@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from 'axios';
-import images from "./stories.js";
+import fallbackStories from "./stories.js";
 import { FiArrowRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
@@ -22,15 +22,17 @@ export default function StorySlider() {
       const data = res.data?.data || res.data;
       if (Array.isArray(data) && data.length > 0) {
         setStories(data);
+      } else if (fallbackStories.length > 0) {
+        setStories(fallbackStories);
       } else {
-        setStories(images);
+        setStories([]);
       }
     }).catch(() => {
-      setStories(images);
+      setStories(fallbackStories.length > 0 ? fallbackStories : []);
     }).finally(() => setLoading(false));
   }, []);
 
-  const slides = stories || images;
+  const slides = stories || fallbackStories;
 
   useEffect(() => {
     if (slides.length === 0) return;
@@ -78,7 +80,8 @@ export default function StorySlider() {
           <div className="flex items-center gap-6">
             <Link
               to="/gallery"
-              className="inline-flex items-center gap-2 bg-blue-950 dark:bg-yellow-400 text-white dark:text-blue-950 px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity text-white"
+              style={{ backgroundColor: 'var(--color-primary)' }}
             >
               View Full Gallery <FiArrowRight />
             </Link>
@@ -94,11 +97,11 @@ export default function StorySlider() {
           <button
             key={idx}
             onClick={() => goToSlide(idx)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              idx === index
-                ? "bg-blue-950 dark:bg-yellow-400 w-8"
-                : "bg-white/50 hover:bg-white/70"
-            }`}
+            className="h-3 rounded-full transition-all duration-300"
+            style={{
+              width: idx === index ? '2rem' : '0.75rem',
+              backgroundColor: idx === index ? 'var(--color-primary)' : 'rgba(255,255,255,0.5)',
+            }}
             aria-label={`Go to slide ${idx + 1}`}
           />
         ))}
@@ -106,8 +109,11 @@ export default function StorySlider() {
 
       <div className="absolute top-0 left-0 right-0 h-1 bg-gray-800/30">
         <div
-          className="h-full bg-blue-950 dark:bg-yellow-400 transition-all duration-5000 ease-linear"
-          style={{ width: `${((index + 1) / slides.length) * 100}%` }}
+          className="h-full transition-all duration-5000 ease-linear"
+          style={{
+            width: `${((index + 1) / slides.length) * 100}%`,
+            backgroundColor: 'var(--color-primary)',
+          }}
         />
       </div>
     </div>
