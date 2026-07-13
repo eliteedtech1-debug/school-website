@@ -96,6 +96,18 @@ const Footer = () => {
 
         <div className="mt-8 pt-8 text-center text-sm opacity-60" style={{ borderTop: '1px solid rgba(201,162,39,0.3)' }}>
           <p>&copy; {year} {schoolName}. All rights reserved.</p>
+          <p className="mt-1">
+            Powered by{' '}
+            <a
+              href="https://eliteedu.tech"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+              style={{ color: 'var(--color-secondary)' }}
+            >
+              Elite Edutech Systems Ltd
+            </a>
+          </p>
         </div>
       </div>
     </footer>

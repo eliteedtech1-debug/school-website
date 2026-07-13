@@ -148,7 +148,7 @@ function SectionEditor({ section, onClose }) {
   );
 
   const save = useMutation({
-    mutationFn: () => api.put(`/website-sections/${SCHOOL_ID}/${section.id}`, { paragraphs, media }),
+    mutationFn: () => api.put(`/website-sections/${section.id}?school_id=${encodeURIComponent(SCHOOL_ID)}`, { paragraphs, media }),
     onSuccess: () => { qc.invalidateQueries(['sections']); toast.success('Saved'); onClose(); },
     onError: () => toast.error('Save failed'),
   });
@@ -185,28 +185,28 @@ export default function Content() {
 
   const { data: sections = [], isLoading } = useQuery({
     queryKey: ['sections'],
-    queryFn: () => api.get(`/website-sections/${SCHOOL_ID}`).then(r => r.data.data),
+    queryFn: () => api.get(`/website-sections?school_id=${encodeURIComponent(SCHOOL_ID)}`).then(r => r.data.data),
   });
 
   const createSection = useMutation({
-    mutationFn: (body) => api.post(`/website-sections/${SCHOOL_ID}`, body),
+    mutationFn: (body) => api.post(`/website-sections?school_id=${encodeURIComponent(SCHOOL_ID)}`, body),
     onSuccess: () => { qc.invalidateQueries(['sections']); setAdding(false); toast.success('Section created'); },
     onError: () => toast.error('Failed to create'),
   });
 
   const toggleVisible = useMutation({
-    mutationFn: ({ id, is_visible }) => api.put(`/website-sections/${SCHOOL_ID}/${id}`, { is_visible }),
+    mutationFn: ({ id, is_visible }) => api.put(`/website-sections/${id}?school_id=${encodeURIComponent(SCHOOL_ID)}`, { is_visible }),
     onSuccess: () => qc.invalidateQueries(['sections']),
   });
 
   const deleteSection = useMutation({
-    mutationFn: (id) => api.delete(`/website-sections/${SCHOOL_ID}/${id}`),
+    mutationFn: (id) => api.delete(`/website-sections/${id}?school_id=${encodeURIComponent(SCHOOL_ID)}`),
     onSuccess: () => { qc.invalidateQueries(['sections']); toast.success('Deleted'); },
     onError: () => toast.error('Delete failed'),
   });
 
   const moveSection = useMutation({
-    mutationFn: (items) => api.put(`/website-sections/${SCHOOL_ID}/reorder`, items),
+    mutationFn: (items) => api.put(`/website-sections/reorder?school_id=${encodeURIComponent(SCHOOL_ID)}`, items),
     onSuccess: () => qc.invalidateQueries(['sections']),
   });
 

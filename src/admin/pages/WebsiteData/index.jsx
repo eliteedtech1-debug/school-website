@@ -69,7 +69,7 @@ export default function WebsiteData() {
 
   const { data: sections = [], isLoading } = useQuery({
     queryKey: ['sections'],
-    queryFn: () => api.get(`/website-sections/${SCHOOL_ID}`).then(r => r.data.data),
+    queryFn: () => api.get(`/website-sections?school_id=${encodeURIComponent(SCHOOL_ID)}`).then(r => r.data.data),
   });
 
   const section = sections.find(s => s.section_key === activeTab);
@@ -85,7 +85,7 @@ export default function WebsiteData() {
 
   const saveMutation = useMutation({
     mutationFn: async (newParagraphs) => {
-      return api.put(`/website-sections/${SCHOOL_ID}/${section.id}`, { paragraphs: newParagraphs });
+      return api.put(`/website-sections/${section.id}?school_id=${encodeURIComponent(SCHOOL_ID)}`, { paragraphs: newParagraphs });
     },
     onSuccess: () => {
       qc.invalidateQueries(['sections']);
