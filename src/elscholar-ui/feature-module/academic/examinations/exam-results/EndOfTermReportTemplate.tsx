@@ -1444,8 +1444,10 @@ const EndOfTermReportTemplate: React.FC<EndOfTermReportProps> = ({
 
     // Handle total_score - trust the API's weighted total_score
     if (fieldName === 'total_score') {
-      const allNull = [1,2,3,4,5,6,7].every(i => subject[`ca${i}_score`] == null) && subject.exam_score == null;
-      if (allNull) return '-';
+      // The API contract: percentage=null means "not taken" even if total_score="0.00".
+      // percentage having any value (including "0.00") means the student was scored.
+      const percentageIsNull = subject.percentage === null || subject.percentage === undefined || subject.percentage === '';
+      if (percentageIsNull) return '-';
 
       // For Cumulative CA, compute total as sum of individual CA scores
       if (assessmentType === 'CUMULATIVE_CA') {
@@ -1458,7 +1460,7 @@ const EndOfTermReportTemplate: React.FC<EndOfTermReportProps> = ({
 
       if (subject.total_score !== null && subject.total_score !== undefined) {
         const val = parseFloat(String(subject.total_score));
-        if (!isNaN(val) && val > 0) return fmt(val);
+        if (!isNaN(val)) return fmt(val);
       }
       if (subject.percentage !== null && subject.percentage !== undefined) {
         const val = parseFloat(String(subject.percentage));
@@ -1525,7 +1527,12 @@ const EndOfTermReportTemplate: React.FC<EndOfTermReportProps> = ({
   // Combined getScore that handles all cases using getSubjectScore
   const getScore = (subject: Subject, fieldName: string) => {
     console.log('🔍 getScore called:', { subject: subject.subject, fieldName });
-    
+
+    // The API contract: percentage=null means "not taken/not scored" (subject absent from report).
+    // percentage having ANY value (including "0.00") means the student was scored — show the data.
+    // total_score="0.00" alone is NOT sufficient — it can be a DB default for unscored subjects.
+    const hasData = subject.percentage !== null && subject.percentage !== undefined && subject.percentage !== '';
+
     // For CA and exam scores, use the enhanced getSubjectScore function
     if ((fieldName.includes('_score') && fieldName !== 'total_score') || 
         fieldName === 'exam' || 
@@ -1544,9 +1551,8 @@ const EndOfTermReportTemplate: React.FC<EndOfTermReportProps> = ({
     }
 
     if (fieldName === 'grade') {
-      // If all scores are null/missing, subject was not attempted
-      const allNull = [1,2,3,4,5,6,7].every(i => subject[`ca${i}_score`] == null) && subject.exam_score == null;
-      if (allNull) return { value: '-', style: {} };
+      // If no individual scores were entered, subject was not attempted — show '-'
+      if (!hasData) return { value: '-', style: {} };
 
       // For Cumulative CA, compute grade from CA-only total and CA max
       if (assessmentType === 'CUMULATIVE_CA') {
@@ -1559,9 +1565,13 @@ const EndOfTermReportTemplate: React.FC<EndOfTermReportProps> = ({
         return { value: calculatedGrade, style: {} };
       }
 
+      // Use the API-calculated percentage for grade (it accounts for weighted contributions).
+      // Fall back to total_score/100 only if percentage is not available.
+      const pct = parseFloat(String(subject.percentage ?? ''));
       const total = parseFloat(String(subject.total_score ?? ''));
-      if (isNaN(total) || total === 0) return { value: '-', style: {} };
-      const calculatedGrade = getGradeFromScore(Math.round(total), 100);
+      const effectivePct = !isNaN(pct) ? pct : (!isNaN(total) ? total : NaN);
+      if (isNaN(effectivePct)) return { value: '-', style: {} };
+      const calculatedGrade = getGradeFromScore(effectivePct, 100);
       return { value: calculatedGrade, style: {} };
     }
 
@@ -1584,8 +1594,7 @@ const EndOfTermReportTemplate: React.FC<EndOfTermReportProps> = ({
     }
 
     if (fieldName === 'remark') {
-      const allNull = [1,2,3,4,5,6,7].every(i => subject[`ca${i}_score`] == null) && subject.exam_score == null;
-      if (allNull) return { value: '-', style: {} };
+      if (!hasData) return { value: '-', style: {} };
 
       // For Cumulative CA, compute remark from CA-only total and CA max
       if (assessmentType === 'CUMULATIVE_CA') {
@@ -1604,9 +1613,12 @@ const EndOfTermReportTemplate: React.FC<EndOfTermReportProps> = ({
         return { value: remarkAbbr[calculatedRemark] || calculatedRemark, style: {} };
       }
 
-      const total = parseFloat(String(subject.total_score ?? ''));
-      if (isNaN(total) || total === 0) return { value: '-', style: {} };
-      const calculatedRemark = getRemarkFromScore(Math.round(total), 100);
+      // Use the API-calculated percentage for remark (it accounts for weighted contributions).
+      const pct2 = parseFloat(String(subject.percentage ?? ''));
+      const total2 = parseFloat(String(subject.total_score ?? ''));
+      const effectivePct2 = !isNaN(pct2) ? pct2 : (!isNaN(total2) ? total2 : NaN);
+      if (isNaN(effectivePct2)) return { value: '-', style: {} };
+      const calculatedRemark = getRemarkFromScore(effectivePct2, 100);
       const remarkAbbr: Record<string, string> = {
         'Below Average': 'Below Avg',
         'Very Good': 'V.Good',
@@ -1617,9 +1629,8 @@ const EndOfTermReportTemplate: React.FC<EndOfTermReportProps> = ({
     }
 
     if (fieldName === 'position') {
-      const allNull = [1,2,3,4,5,6,7].every(i => subject[`ca${i}_score`] == null) && subject.exam_score == null;
       const hasNoPosition = subject.subject_position === null || subject.subject_position === undefined;
-      if (allNull || hasNoPosition) return { value: '-', style: {} };
+      if (!hasData || hasNoPosition) return { value: '-', style: {} };
       const pos = parseInt(String(subject.subject_position));
       if (isNaN(pos) || pos <= 0) return { value: '-', style: {} };
       const s = ['th', 'st', 'nd', 'rd'];
@@ -1634,11 +1645,10 @@ const EndOfTermReportTemplate: React.FC<EndOfTermReportProps> = ({
     }
 
     if (fieldName === 'average') {
-      const allNull = [1,2,3,4,5,6,7].every(i => subject[`ca${i}_score`] == null) && subject.exam_score == null;
-      return { value: allNull ? '-' : (subject.subject_class_average ? subject.subject_class_average.toString() : '-'), style: {} };
+      return { value: !hasData ? '-' : (subject.subject_class_average ? subject.subject_class_average.toString() : '-'), style: {} };
     }
 
-    return { value: subject[fieldName] || '-', style: {} };
+    return { value: subject[fieldName] !== undefined && subject[fieldName] !== null && subject[fieldName] !== '' ? subject[fieldName] : '-', style: {} };
   };
 
   // Organize character assessments dynamically by category

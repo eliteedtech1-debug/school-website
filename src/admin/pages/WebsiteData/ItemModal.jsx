@@ -1,46 +1,117 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import api from '../../../lib/axios';
 import toast from 'react-hot-toast';
 import { FiX, FiSave, FiUpload } from 'react-icons/fi';
 import { ICON_OPTIONS, COLOR_OPTIONS } from './common';
+import CropModal from '../../components/CropModal';
 
 export default function ItemModal({ sectionKey, tabLabel, initialValue, onSave, onCancel }) {
   const [form, setForm] = useState(initialValue);
   const [uploading, setUploading] = useState(false);
+  // Crop modal state
+  const [cropModal, setCropModal] = useState({ open: false, file: null, callback: null, isMultiple: false });
+  // Queue for multi-file uploads
+  const [uploadQueue, setUploadQueue] = useState([]);
+  const [uploadResults, setUploadResults] = useState([]);
+  const [processingMultiple, setProcessingMultiple] = useState(false);
 
-  // Single image upload (for non-hero sections)
-  const uploadMedia = async (file) => {
+  // ── Upload the actual file to server ──
+  const doUpload = async (file, isMultiple = false) => {
     const fd = new FormData();
     fd.append('file', file);
-    setUploading(true);
     try {
       const res = await api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      const url = res.data?.url || res.data?.data?.url || '';
-      if (url) setForm(p => ({ ...p, image: url }));
-    } catch { toast.error('Upload failed'); }
-    finally { setUploading(false); }
+      return res.data?.url || res.data?.data?.url || '';
+    } catch {
+      toast.error(`Upload failed: ${file.name}`);
+      return '';
+    }
   };
 
-  // Multiple image upload (for hero carousel)
-  const uploadHeroImages = async (files) => {
+  // ── Open crop modal for a single file ──
+  const openCropModal = (file, onCropped) => {
+    setCropModal({ open: true, file, callback: onCropped, isMultiple: false });
+  };
+
+  // ── Handle crop complete for single upload ──
+  const handleCropComplete = async (croppedFile) => {
     setUploading(true);
-    const uploaded = [];
-    for (const file of files) {
-      const fd = new FormData();
-      fd.append('file', file);
-      try {
-        const res = await api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-        const url = res.data?.url || res.data?.data?.url || '';
-        if (url) uploaded.push(url);
-      } catch { toast.error(`Upload failed: ${file.name}`); }
-    }
-    if (uploaded.length > 0) {
-      setForm(p => ({
-        ...p,
-        images: [...(p.images || []), ...uploaded],
-      }));
-    }
+    setCropModal(p => ({ ...p, open: false }));
+    const url = await doUpload(croppedFile);
+    if (url) setForm(p => ({ ...p, image: url }));
     setUploading(false);
+  };
+
+  // ── Skip crop for single upload ──
+  const handleSkipCrop = async () => {
+    const file = cropModal.file;
+    setUploading(true);
+    setCropModal(p => ({ ...p, open: false }));
+    const url = await doUpload(file);
+    if (url) setForm(p => ({ ...p, image: url }));
+    setUploading(false);
+  };
+
+  // ── Handle single file selection (opens crop modal) ──
+  const uploadMedia = (file) => {
+    openCropModal(file);
+  };
+
+  // ── Handle multiple file selection for hero carousel ──
+  const uploadHeroImages = (files) => {
+    const fileArray = Array.from(files);
+    setUploadQueue(fileArray);
+    setUploadResults([]);
+    setProcessingMultiple(true);
+    // Show crop modal for the first file
+    setCropModal({ open: true, file: fileArray[0], callback: null, isMultiple: true });
+  };
+
+  // ── Handle crop/skip for multi-file hero uploads ──
+  const processNextInQueue = useCallback((currentIndex, results) => {
+    const nextIdx = currentIndex + 1;
+    if (nextIdx >= uploadQueue.length) {
+      // All done - save results
+      if (results.length > 0) {
+        setForm(p => ({
+          ...p,
+          images: [...(p.images || []), ...results],
+        }));
+      }
+      setProcessingMultiple(false);
+      setUploadQueue([]);
+      setUploadResults([]);
+      return;
+    }
+    // Show crop modal for next file
+    setCropModal({ open: true, file: uploadQueue[nextIdx], callback: null, isMultiple: true });
+  }, [uploadQueue]);
+
+  const handleHeroCropComplete = async (croppedFile) => {
+    setCropModal(p => ({ ...p, open: false }));
+    setUploading(true);
+    const url = await doUpload(croppedFile);
+    setUploading(false);
+    if (url) {
+      const newResults = [...uploadResults, url];
+      setUploadResults(newResults);
+      const currentIdx = uploadQueue.indexOf(cropModal.file);
+      if (currentIdx >= 0) processNextInQueue(currentIdx, newResults);
+    }
+  };
+
+  const handleHeroSkipCrop = async () => {
+    const file = cropModal.file;
+    setCropModal(p => ({ ...p, open: false }));
+    setUploading(true);
+    const url = await doUpload(file);
+    setUploading(false);
+    if (url) {
+      const newResults = [...uploadResults, url];
+      setUploadResults(newResults);
+      const currentIdx = uploadQueue.indexOf(file);
+      if (currentIdx >= 0) processNextInQueue(currentIdx, newResults);
+    }
   };
 
   const removeHeroImage = (idx) => {
@@ -775,6 +846,23 @@ export default function ItemModal({ sectionKey, tabLabel, initialValue, onSave, 
           </button>
         </div>
       </div>
+
+      {/* Crop Modal */}
+      <CropModal
+        open={cropModal.open}
+        file={cropModal.file}
+        aspectRatio={null}
+        onCrop={cropModal.isMultiple ? handleHeroCropComplete : handleCropComplete}
+        onSkip={cropModal.isMultiple ? handleHeroSkipCrop : handleSkipCrop}
+        onCancel={() => {
+          setCropModal(p => ({ ...p, open: false }));
+          if (processingMultiple) {
+            setProcessingMultiple(false);
+            setUploadQueue([]);
+            setUploadResults([]);
+          }
+        }}
+      />
     </div>
   );
 }
