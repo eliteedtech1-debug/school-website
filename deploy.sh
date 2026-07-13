@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+GITHUB_TOKEN="${GITHUB_TOKEN:-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}"
+GIT_REPO="https://${GITHUB_TOKEN}@github.com/eliteedtech/schools_website.git"
+
 echo "🚀 Deploying schools_website → haiha.eliteedu.tech"
 echo "================================================"
 cd "$(dirname "$0")"
@@ -71,7 +74,7 @@ if git diff --quiet && git diff --cached --quiet; then
 else
   git add -A
   git commit -m "deploy: update schools_website [skip ci]" 2>/dev/null || echo "⚠️  Nothing new to commit"
-  git push origin dynamic 2>&1 || echo "⚠️  Git push failed (may need to pull/rebase first)"
+  git push "$GIT_REPO" dynamic 2>&1 || echo "⚠️  Git push failed (may need to pull/rebase first)"
   echo "✅ Source pushed to origin"
 fi
 
