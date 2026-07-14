@@ -3,9 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO meta tags -->
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="%VITE_PRIMARY_COLOR%" />
+    <meta name="description" content="%VITE_SCHOOL_NAME% — A centre for academic excellence and character development. Offering quality education from Early Years to Senior Secondary in Abuja, Nigeria. Enrol today!" />
+    <meta name="keywords" content="school, Abuja, education, %VITE_SCHOOL_NAME%, Nigeria, private school, academic excellence" />
 
+    <!-- Open Graph -->
+    <meta property="og:title" content="%VITE_SCHOOL_NAME%" />
+    <meta property="og:description" content="%VITE_SCHOOL_NAME% — A centre for academic excellence and character development in Abuja, Nigeria." />
+    <meta property="og:image" content="%VITE_APP_LOGO%" />
+    <meta property="og:url" content="%VITE_SITE_URL%" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="%VITE_SCHOOL_NAME%" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="%VITE_SCHOOL_NAME%" />
+    <meta name="twitter:description" content="%VITE_SCHOOL_NAME% — A centre for academic excellence and character development in Abuja, Nigeria." />
+    <meta name="twitter:image" content="%VITE_APP_LOGO%" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="%VITE_SITE_URL%" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,8 +37,6 @@
       Favicon: uses VITE_APP_LOGO from .env (the school's badge_url).
       Falls back to /favicon.png (public/favicon.png — same image copied locally).
       Vite replaces %VITE_APP_LOGO% at build time.
-      In dev mode, if the URL is a remote https:// link it works directly;
-      if it's a local path (/assets/img/...) the dev server serves it.
     -->
     <link rel="icon" type="image/png" href="%VITE_APP_LOGO%" />
     <link rel="apple-touch-icon" href="%VITE_APP_LOGO%" />

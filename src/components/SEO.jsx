@@ -2,8 +2,8 @@ import { Helmet } from 'react-helmet-async';
 
 const FALLBACK_SITE_NAME = import.meta.env.VITE_SCHOOL_NAME || 'Our School';
 const FALLBACK_SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
-const DEFAULT_DESC = 'Educational institution committed to academic excellence and character development.';
-const DEFAULT_OG_IMAGE = '/school.png';
+const DEFAULT_DESC = `${FALLBACK_SITE_NAME} — A centre for academic excellence and character development. Offering quality education from Early Years to Senior Secondary in Abuja, Nigeria. Enrol today!`;
+const DEFAULT_OG_IMAGE = `${FALLBACK_SITE_URL}/school.png`;
 
 const SEO = ({
   title,
