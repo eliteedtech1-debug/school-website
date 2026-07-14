@@ -66,10 +66,40 @@ const Home = () => {
   const [applyOpen, setApplyOpen] = useState(false);
   const { getSection, getParagraphs, getMedia, meta, loading } = useWebsiteContent();
 
-  const schoolName = meta?.school_name || "Our School";
-  const tagline    = meta?.tagline || "";
-  const address    = meta?.address || "";
-  const logoUrl    = meta?.logo_url || null;
+  // Read branding from section (primary source), fallback to meta
+  const parseFirstJson = (key) => {
+    const section = getSection(key);
+    if (!section) return {};
+    try {
+      const pars = typeof section.paragraphs === 'string'
+        ? JSON.parse(section.paragraphs)
+        : (section.paragraphs || []);
+      return pars[0] ? (typeof pars[0] === 'string' ? JSON.parse(pars[0]) : pars[0]) : {};
+    } catch { return {}; }
+  };
+
+  const brandingData = parseFirstJson('branding');
+  const schoolName = brandingData.school_name || meta?.school_name || "Our School";
+  const tagline    = brandingData.tagline || meta?.tagline || "";
+  const logoUrl    = brandingData.logo_url || meta?.logo_url || null;
+
+  // Read address from contact_info section
+  const contactData = (() => {
+    const section = getSection('contact_info');
+    if (!section) return {};
+    try {
+      const pars = typeof section.paragraphs === 'string'
+        ? JSON.parse(section.paragraphs)
+        : (section.paragraphs || []);
+      const result = {};
+      pars.forEach(p => {
+        const d = typeof p === 'string' ? JSON.parse(p) : p;
+        if (d.type === 'address') result.address = d.text;
+      });
+      return result;
+    } catch { return {}; }
+  })();
+  const address = contactData.address || meta?.address || "";
 
   // Parse structured data from CMS sections (JSON in paragraph text)
   const parseStructured = (key) => {
