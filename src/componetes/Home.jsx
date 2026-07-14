@@ -451,7 +451,7 @@ const Home = () => {
                 <div className="space-y-2">
                   <h4 className="font-semibold text-sm text-blue-950 dark:text-yellow-400">Key Subjects:</h4>
                   <div className="flex flex-wrap gap-2">
-                    {stream.subjects.map((subject, idx) => (
+                    {(Array.isArray(stream.subjects) ? stream.subjects : (stream.subjects || '').split(',').map(s => s.trim())).filter(Boolean).map((subject, idx) => (
                       <span
                         key={idx}
                         className="bg-blue-50 dark:bg-gray-700 text-blue-950 dark:text-yellow-400 px-3 py-1 rounded-full text-sm"
