@@ -16,7 +16,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import SEO from "../components/SEO";
 
 import { useState, useEffect } from "react";
-import StoryScreen from "./StoryScreen";
 import CountUp from "./layout/CountUp";
 import { useWebsiteContent } from "../lib/useWebsiteContent";
 import ApplyModal from "./ApplyModal";
@@ -116,6 +115,11 @@ const Home = () => {
   const cmsStats = parseStructured('home_stats');
   const cmsStreams = parseStructured('home_streams');
   const cmsProgramsSection = getSection('programs');
+
+  // Gallery items from the gallery section media
+  const galleryMedia = getMedia('gallery');
+  const galleryItems = galleryMedia.filter(item => item.type !== 'video').slice(0, 6);
+  const gallerySection = getSection('gallery');
 
   useEffect(() => {
     if (carouselImages.length === 0) return;
@@ -435,8 +439,67 @@ const Home = () => {
 
       {/* Gallery */}
       <section className="py-16 bg-gray-50 dark:bg-gray-900">
-        <h2 className="text-3xl font-bold text-center mb-12">Our Gallery</h2>
-        <StoryScreen />
+        <div className="max-w-7xl mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl font-bold mb-4">{gallerySection?.title || 'Our Gallery'}</h2>
+            <p className="text-gray-600 dark:text-gray-400">A glimpse into life at our school</p>
+          </motion.div>
+
+          {loading && galleryItems.length === 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {[1,2,3,4,5,6].map(i => (
+                <Skeleton key={i} className="w-full aspect-[4/3] rounded-lg" />
+              ))}
+            </div>
+          ) : galleryItems.length === 0 ? null : (
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="grid grid-cols-2 md:grid-cols-3 gap-4"
+            >
+              {galleryItems.map((item, i) => (
+                <motion.div
+                  key={item.id || i}
+                  variants={fadeUp}
+                  whileHover={{ scale: 1.03 }}
+                  className="relative overflow-hidden rounded-lg aspect-[4/3] group cursor-pointer"
+                >
+                  <img
+                    src={item.image || item.thumbnail_url || item.url}
+                    alt={item.caption || item.title || ''}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    <p className="font-semibold text-sm">{item.caption || item.title || ''}</p>
+                    {item.category && (
+                      <span className="text-xs opacity-80 capitalize">{item.category}</span>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {galleryItems.length > 0 && (
+            <div className="text-center mt-10">
+              <Link
+                to="/gallery"
+                className="inline-flex items-center gap-2 bg-blue-950 dark:bg-yellow-400 text-white dark:text-blue-950 px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity"
+              >
+                View Full Gallery <FiArrowRight />
+              </Link>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Core Values */}
