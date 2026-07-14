@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-GITHUB_TOKEN="${GITHUB_TOKEN:-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}"
-GIT_REPO="https://${GITHUB_TOKEN}@github.com/eliteedtech/schools_website.git"
+GITHUB_TOKEN="${GITHUB_TOKEN:-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}"
+GIT_REPO="https://${GITHUB_TOKEN}@github.com/eliteedtech1-debug/school-website.git"
 
 echo "🚀 Deploying schools_website → haiha.eliteedu.tech"
 echo "================================================"
