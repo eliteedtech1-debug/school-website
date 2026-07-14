@@ -5,13 +5,18 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5123/api';
 const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID;
 const WEBSITE_TOKEN = import.meta.env.VITE_WEBSITE_TOKEN;
 
-// Fetch public website sections once and cache in module scope
+// Fetch public website sections with TTL cache (re-fetch after 5 min)
 let _cache = null;
 let _promise = null;
+let _cacheTime = 0;
+const CACHE_TTL = 5 * 60 * 1000;
+
+export const clearContentCache = () => { _cache = null; _promise = null; _cacheTime = 0; };
 
 const fetchSections = () => {
-  if (_cache) return Promise.resolve(_cache);
-  if (_promise) return _promise;
+  if (_cache && Date.now() - _cacheTime < CACHE_TTL) return Promise.resolve(_cache);
+  if (_promise && Date.now() - _cacheTime < CACHE_TTL) return _promise;
+  _cacheTime = Date.now();
   _promise = axios
     .get(`${API_URL}/public/website-content`, {
       params: { school_id: SCHOOL_ID },
