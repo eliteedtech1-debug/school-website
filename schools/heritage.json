@@ -1,0 +1,28 @@
+{
+  "school_id": "SCH/29",
+  "branch_id": "BRCH/35",
+  "school_short_name": "heritage",
+  "website_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY2hvb2xfaWQiOiJTQ0gvMjkiLCJ0eXBlIjoid2Vic2l0ZSIsImlhdCI6MTc4Mzk2MDYzOH0.HskrxoUeYuivg0QTgTzDRuCuEFxwJJP6cNtSA7v198o",
+  "admission_url": "",
+  "app_name": "HAJIYA AMINA IBRAHIM HERITAGE ACADEMY",
+  "school_name": "HAJIYA AMINA IBRAHIM HERITAGE ACADEMY",
+  "school_logo": "https://files.eliteedu.tech//uploads/c32657fb-0dc1-4a0b-a77b-1630abda14cb_1783786486_6a526bf68ea10.png",
+  "app_logo": "https://files.eliteedu.tech//uploads/c32657fb-0dc1-4a0b-a77b-1630abda14cb_1783786486_6a526bf68ea10.png",
+  "primary_color": "#166534",
+  "secondary_color": "#22c55e",
+  "login_url_staff": "",
+  "login_url_parent": "",
+  "login_url_student": "",
+  "api_url": "https://server.brainstorm.ng/elite-api/api",
+  "app_url": "https://heritage.elitecore.com.ng",
+  "school_tagline": "AN EDUCATION THAT LASTS A LIFETIME",
+  "school_address": "No B.Y. 30 Kerawa Street, Sabon Gari, Tudun Wada, Kaduna",
+  "school_phone": "08069776050",
+  "deploy": {
+    "ssh_key": "~/.ssh/go54_elitecore",
+    "ssh_user": "elitesc1",
+    "host": "131.153.147.34",
+    "path": "/home2/elitesc1/public_html/haiha.eliteedu.tech",
+    "site": "https://heritageacademy.com.ng"
+  }
+}

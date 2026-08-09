@@ -13,6 +13,30 @@ const CACHE_TTL = 5 * 60 * 1000;
 
 export const clearContentCache = () => { _cache = null; _promise = null; _cacheTime = 0; };
 
+// Hide the HTML loading screen (index.html #app-loader), then remove it
+export function hideLoader() {
+  const el = document.getElementById('app-loader');
+  if (!el) return;
+  el.classList.add('loader-hidden');
+  setTimeout(() => el.remove(), 600);
+}
+
+// Fill the loading screen with the school's real (dynamic) logo + name,
+// then fade it out so the page appears fully formed.
+export function brandLoader(meta) {
+  const el = document.getElementById('app-loader');
+  if (!el) return;
+  const badge = el.querySelector('.loader-badge');
+  const nameEl = el.querySelector('.loader-name');
+  if (badge && meta?.logo_url) {
+    const alt = String(meta.school_name || '').replace(/"/g, '&quot;');
+    badge.innerHTML = `<img class="loader-logo" src="${meta.logo_url}" alt="${alt}" />`;
+    badge.classList.add('has-logo');
+  }
+  if (nameEl && meta?.school_name) nameEl.textContent = meta.school_name;
+  setTimeout(hideLoader, 400);
+}
+
 const fetchSections = () => {
   if (_cache && Date.now() - _cacheTime < CACHE_TTL) return Promise.resolve(_cache);
   if (_promise && Date.now() - _cacheTime < CACHE_TTL) return _promise;
@@ -44,6 +68,7 @@ export function useWebsiteContent() {
         recruitment_enabled: data.recruitment_enabled === true || data.recruitment_enabled === 1,
         loading: false,
       });
+      brandLoader(data.meta);
     });
   }, []);
 

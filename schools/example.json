@@ -1,0 +1,28 @@
+{
+  "school_id": "SCH/000",
+  "branch_id": "BRCH/000",
+  "school_short_name": "myschool",
+  "website_token": "PASTE_SCHOOL_WEBSITE_TOKEN_FROM_API",
+  "admission_url": "",
+  "app_name": "MY SCHOOL NAME",
+  "school_name": "MY SCHOOL NAME",
+  "school_logo": "https://example.com/logo.png",
+  "app_logo": "https://example.com/logo.png",
+  "primary_color": "#000000",
+  "secondary_color": "#ffffff",
+  "login_url_staff": "",
+  "login_url_parent": "",
+  "login_url_student": "",
+  "api_url": "https://server.brainstorm.ng/elite-api/api",
+  "app_url": "https://myschool.example.com",
+  "school_tagline": "EXCELLENCE IN EDUCATION",
+  "school_address": "Address here",
+  "school_phone": "08000000000",
+  "deploy": {
+    "ssh_key": "~/.ssh/go54_elitecore",
+    "ssh_user": "elitesc1",
+    "host": "131.153.147.34",
+    "path": "/home2/elitesc1/public_html/THE_DOCROOT",
+    "site": "https://THE_DOMAIN"
+  }
+}

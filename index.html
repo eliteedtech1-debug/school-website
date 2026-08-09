@@ -44,9 +44,90 @@
     <meta name="tagline" content="%VITE_SCHOOL_TAGLINE%" />
 
     <title>%VITE_SCHOOL_NAME%</title>
+
+    <!--
+      App loading screen: inline CSS so it renders instantly on slow networks,
+      covering the blank/scattered content while the JS bundle loads. Shows a
+      generic spinner first; once React mounts and fetches the school's data
+      (logo + name are dynamic, from the website-content API — never from env),
+      useWebsiteContent.js injects the real logo/name into this overlay, then
+      fades it out.
+    -->
+    <style>
+      #app-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background: #ffffff;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+      }
+      #app-loader .loader-badge {
+        position: relative;
+        width: 92px;
+        height: 92px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #app-loader .loader-ring {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 5px solid rgba(17, 24, 39, 0.12);
+        border-top-color: #1f2937;
+        animation: loader-spin 0.9s linear infinite;
+      }
+      #app-loader .loader-badge.has-logo .loader-ring { display: none; }
+      #app-loader .loader-logo {
+        width: 84px;
+        height: 84px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+      }
+      #app-loader .loader-name {
+        font-family: Poppins, Arial, sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        color: #111827;
+        text-align: center;
+        padding: 0 24px;
+        min-height: 1.4em;
+        line-height: 1.4;
+      }
+      #app-loader .loader-text {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        color: #9ca3af;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        animation: loader-pulse 1.2s ease-in-out infinite;
+      }
+      @keyframes loader-spin { to { transform: rotate(360deg); } }
+      @keyframes loader-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+      #app-loader.loader-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+
+    <div id="app-loader" role="status" aria-label="Loading">
+      <div class="loader-badge">
+        <div class="loader-ring"></div>
+      </div>
+      <div class="loader-name"></div>
+      <div class="loader-text">Loading…</div>
+    </div>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

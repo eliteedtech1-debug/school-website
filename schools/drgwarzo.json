@@ -1,0 +1,28 @@
+{
+  "school_id": "FILL_ME",
+  "branch_id": "FILL_ME",
+  "school_short_name": "drgwarzo",
+  "website_token": "FILL_ME",
+  "admission_url": "",
+  "app_name": "FILL_ME",
+  "school_name": "FILL_ME",
+  "school_logo": "FILL_ME",
+  "app_logo": "FILL_ME",
+  "primary_color": "#166534",
+  "secondary_color": "#22c55e",
+  "login_url_staff": "",
+  "login_url_parent": "",
+  "login_url_student": "",
+  "api_url": "https://server.brainstorm.ng/elite-api/api",
+  "app_url": "https://drkabirugwarzoacademy.com.ng",
+  "school_tagline": "FILL_ME",
+  "school_address": "FILL_ME",
+  "school_phone": "FILL_ME",
+  "deploy": {
+    "ssh_key": "~/.ssh/go54_elitecore",
+    "ssh_user": "elitesc1",
+    "host": "131.153.147.34",
+    "path": "/home2/elitesc1/public_html/drgwarzo.elitescholar.ng",
+    "site": "https://drkabirugwarzoacademy.com.ng"
+  }
+}
