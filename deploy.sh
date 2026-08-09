@@ -4,7 +4,7 @@ set -e
 GITHUB_TOKEN="${GITHUB_TOKEN:-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}"
 GIT_REPO="https://${GITHUB_TOKEN}@github.com/eliteedtech1-debug/school-website.git"
 
-echo "🚀 Deploying schools_website → haiha.eliteedu.tech"
+echo "🚀 Deploying schools_website → heritage.elitecore.com.ng"
 echo "================================================"
 cd "$(dirname "$0")"
 
@@ -22,11 +22,11 @@ else
 fi
 
 echo ""
-echo "📋 Step 3: Deploying to go54 server (haiha.eliteedu.tech)..."
+echo "📋 Step 3: Deploying to go54 server (heritage.elitecore.com.ng → haiha.eliteedu.tech path)..."
 
 GO54_KEY="${GO54_KEY:-$HOME/.ssh/go54_elitecore}"
 GO54_USER="${GO54_USER:-elitesc1}"
-GO54_HOST="${GO54_HOST:-elitescholar.ng}"
+GO54_HOST="${GO54_HOST:-131.153.147.34}"
 GO54_PATH="${GO54_PATH:-/home2/elitesc1/public_html/haiha.eliteedu.tech}"
 
 if [ -f "$GO54_KEY" ]; then
@@ -35,7 +35,7 @@ if [ -f "$GO54_KEY" ]; then
 
   # Use SCP + SSH (more reliable than tar pipe — rsync not available on go54)
   echo "  📦 Packing files..."
-  TAR_FILE="/tmp/haiha-deploy.tar.gz"
+  TAR_FILE="/tmp/heritage-deploy.tar.gz"
   rm -f "$TAR_FILE"
   tar -czf "$TAR_FILE" -C dist .
 
@@ -44,12 +44,12 @@ if [ -f "$GO54_KEY" ]; then
 
   echo "  📂 Extracting on server..."
   ssh -i "$GO54_KEY" -o StrictHostKeyChecking=no "${GO54_USER}@${GO54_HOST}" \
-    "cd ${GO54_PATH} && tar -xzf haiha-deploy.tar.gz && rm haiha-deploy.tar.gz" 2>&1 | grep -v "perl:\|warning:\|LANG\|LC_\|locale\|Falling\|are supported" || true
+    "cd ${GO54_PATH} && tar -xzf heritage-deploy.tar.gz && rm heritage-deploy.tar.gz" 2>&1 | grep -v "perl:\|warning:\|LANG\|LC_\|locale\|Falling\|are supported" || true
 
   rm -f "$TAR_FILE"
 
   echo ""
-  echo "✅ Deployed to: http://haiha.eliteedu.tech/"
+  echo "✅ Deployed to: https://heritage.elitecore.com.ng/"
   echo "   Host: ${GO54_HOST}:${GO54_PATH}"
 else
   echo ""
@@ -80,4 +80,4 @@ fi
 
 echo ""
 echo "🎉 Deployment completed!"
-echo "   Site: http://haiha.eliteedu.tech/"
+echo "   Site: https://heritage.elitecore.com.ng/"

@@ -9,11 +9,11 @@
 |---|---|
 | School ID | `SCH/29` |
 | School Name | HAJIYA AMINA IBRAHIM HERITAGE ACADEMY |
-| Short Name | haiha |
+| Short Name | heritage |
 | Motto | AN EDUCATION THAT LASTS A LIFETIME |
 | Address | No B.Y. 30 Kerawa Street, Sabon Gari, Tudun Wada, Kaduna |
 | Phone | 08069776050 |
-| Email | admin@haiheritage.com.ng |
+| Email | admin@heritageacademy.com.ng |
 | Logo | `https://files.eliteedu.tech//uploads/c32657fb-0dc1-4a0b-a77b-1630abda14cb_1783786486_6a526bf68ea10.png` |
 
 ---
