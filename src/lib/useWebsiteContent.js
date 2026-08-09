@@ -23,17 +23,17 @@ const fetchSections = () => {
       headers: WEBSITE_TOKEN ? { Authorization: `Bearer ${WEBSITE_TOKEN}` } : {},
     })
     .then(r => { _cache = r.data; return _cache; })
-    .catch(() => ({ sections: [], meta: null, theme: null }));
+    .catch(() => ({ sections: [], meta: null, theme: null, recruitment_enabled: false }));
   return _promise;
 };
 
 /**
- * Returns { sections, meta, theme, loading }
+ * Returns { sections, meta, theme, recruitment_enabled, loading }
  * sections: array of { section_key, title, paragraphs, media, is_visible }
  * Helper: getSection(key) → section | null
  */
 export function useWebsiteContent() {
-  const [state, setState] = useState({ sections: [], meta: null, theme: null, loading: true });
+  const [state, setState] = useState({ sections: [], meta: null, theme: null, recruitment_enabled: false, loading: true });
 
   useEffect(() => {
     fetchSections().then(data => {
@@ -41,6 +41,7 @@ export function useWebsiteContent() {
         sections: data.sections || [],
         meta: data.meta || null,
         theme: data.theme || null,
+        recruitment_enabled: data.recruitment_enabled === true || data.recruitment_enabled === 1,
         loading: false,
       });
     });

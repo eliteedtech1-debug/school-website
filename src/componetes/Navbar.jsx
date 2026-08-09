@@ -6,7 +6,7 @@ import { useWebsiteContent } from "../lib/useWebsiteContent";
 const Navbar = ({ darkMode, setDarkMode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { meta } = useWebsiteContent();
+  const { meta, recruitment_enabled } = useWebsiteContent();
 
   const schoolName = meta?.school_name || "Our School";
   const logoUrl = meta?.logo_url || null;
@@ -16,6 +16,7 @@ const Navbar = ({ darkMode, setDarkMode }) => {
     { name: "About", path: "/about" },
     { name: "Gallery", path: "/gallery" },
     { name: "Apply", path: "/apply" },
+    ...(recruitment_enabled ? [{ name: "Jobs", path: "/careers" }] : []),
     { name: "Results", path: "/results" },
     { name: "Contact", path: "/contact" },
   ];

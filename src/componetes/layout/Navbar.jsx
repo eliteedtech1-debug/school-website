@@ -7,6 +7,9 @@ import { useLocation } from "react-router-dom";
 import { useWebsiteContent } from "../../lib/useWebsiteContent";
 import DarkModeToggle from "./DarkModeToggle";
 import ApplyModal from "../ApplyModal";
+import api from "../../lib/axios";
+
+const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID;
 
 /* ─── Login URL helper ────────────────────────────────────────────────────
    Priority order for each portal type (staff / parent / student):
@@ -170,10 +173,26 @@ function LoginDropdown({ isMobile = false }) {
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [applyOpen, setApplyOpen] = useState(false);
+  const [openJobs, setOpenJobs] = useState(0);
   const location = useLocation();
-  const { meta } = useWebsiteContent();
+  const { meta, recruitment_enabled } = useWebsiteContent();
   const schoolName = meta?.school_name || "";
   const logoUrl = meta?.logo_url || null;
+
+  // Pulse the Jobs CTA only while recruitment is actually ongoing
+  useEffect(() => {
+    if (!recruitment_enabled) return;
+    let cancelled = false;
+    api
+      .get("/recruitment/jobs", { params: { school_id: SCHOOL_ID, public: true } })
+      .then((r) => {
+        if (!cancelled) setOpenJobs(r.data?.data?.length || 0);
+      })
+      .catch(() => { if (!cancelled) setOpenJobs(0); });
+    return () => { cancelled = true; };
+  }, [recruitment_enabled]);
+
+  const recruiting = recruitment_enabled && openJobs > 0;
 
   const linkClass = (path) =>
     location.pathname === path
@@ -222,6 +241,25 @@ export default function Navbar() {
               Apply
             </button>
           </li>
+          {recruitment_enabled && (
+            <li>
+              {recruiting ? (
+                <Link
+                  to="/careers"
+                  className="inline-flex items-center gap-2 animate-pulse bg-red-600 text-white font-bold
+                             px-4 py-1.5 rounded-full hover:bg-red-700 transition shadow-md"
+                >
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
+                  </span>
+                  Jobs
+                </Link>
+              ) : (
+                <Link className={linkClass("/careers")} to="/careers">Jobs</Link>
+              )}
+            </li>
+          )}
           <li><Link className={linkClass("/Results")} to="/Results">Results</Link></li>
           <li><Link className={linkClass("/contact")} to="/contact">Contact</Link></li>
         </ul>
@@ -257,6 +295,9 @@ export default function Navbar() {
           <ul className="flex flex-col items-center gap-4 py-6 text-gray-700 font-medium">
             <Link className={linkClass("/")} onClick={() => setOpen(false)} to="/">Home</Link>
             <Link className={linkClass("/about")} onClick={() => setOpen(false)} to="/about">About</Link>
+            {recruitment_enabled && (
+              <Link className={linkClass("/careers")} onClick={() => setOpen(false)} to="/careers">Jobs</Link>
+            )}
             <Link className={linkClass("/Results")} onClick={() => setOpen(false)} to="/Results">Results</Link>
             <Link className={linkClass("/gallery")} onClick={() => setOpen(false)} to="/gallery">Gallery</Link>
             <Link className={linkClass("/contact")} onClick={() => setOpen(false)} to="/contact">Contact</Link>

@@ -8,6 +8,7 @@ import Home from './componetes/Home';
 import About from './componetes/About';
 import Gallery from './componetes/Gallery';
 import Apply from './componetes/Apply';
+import Careers from './componetes/Careers';
 import Results from './componetes/Results';
 import Price from './componetes/Price';
 import Contact from './componetes/Contact';
@@ -164,6 +165,7 @@ function PublicRoutes() {
           <Route path="/about" element={<About />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/apply" element={<Apply />} />
+          <Route path="/careers" element={<Careers />} />
           <Route path="/results" element={<Results />} />
           <Route path="/price" element={<Price />} />
           <Route path="/contact" element={<Contact />} />
