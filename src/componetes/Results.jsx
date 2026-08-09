@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FiSearch, FiAlertCircle, FiCheckCircle, FiDownload } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { pdf } from '@react-pdf/renderer';
@@ -7,6 +7,8 @@ import { useWebsiteContent } from "../lib/useWebsiteContent";
 import EndOfTermReportTemplate from '@elscholar-ui/feature-module/academic/examinations/exam-results/EndOfTermReportTemplate';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
+const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID || '';
+const BRANCH_ID = import.meta.env.VITE_BRANCH_ID || '';
 const WEBSITE_TOKEN = import.meta.env.VITE_WEBSITE_TOKEN || '';
 const AUTH_HEADER = WEBSITE_TOKEN ? { Authorization: `Bearer ${WEBSITE_TOKEN}` } : {};
 
@@ -28,13 +30,7 @@ const getGrade = (score) => {
   return found ? { grade: found.grade, remark: found.remark } : { grade: '-', remark: '-' };
 };
 
-const getCurrentTerm = () => {
-  const month = new Date().getMonth();
-  if (month >= 8) return 'First Term';
-  if (month >= 4) return 'Second Term';
-  return 'Third Term';
-};
-
+// Fallback terms (only used if the school's academic calendar can't be loaded)
 const generateYearTerms = () => {
   const year = new Date().getFullYear();
   const month = new Date().getMonth();
@@ -57,6 +53,38 @@ const Results = () => {
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
 
+  // Dynamic terms from the school's academic calendar (public API)
+  const [terms, setTerms] = useState([]);
+  const [termsLoading, setTermsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const query = new URLSearchParams({ school_id: SCHOOL_ID });
+    if (BRANCH_ID) query.set('branch_id', BRANCH_ID);
+    fetch(`${API_URL}/public/academic-years?${query}`, { headers: { ...AUTH_HEADER } })
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        if (d.success && Array.isArray(d.data) && d.data.length > 0) {
+          const items = d.data.map((t) => ({
+            term: t.term,
+            academicYear: t.academic_year,
+            label: `${t.term} (${t.academic_year})`,
+            value: `${t.term}|${t.academic_year}`,
+            status: t.status,
+          }));
+          setTerms(items);
+          const active = items.find((t) => t.status === 'Active');
+          if (active) setSelectedTerm(active.value);
+        } else {
+          setTerms(generateYearTerms());
+        }
+      })
+      .catch(() => { if (!cancelled) setTerms(generateYearTerms()); })
+      .finally(() => { if (!cancelled) setTermsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
   const parseStructured = (key) => {
     const section = getSection(key);
     if (!section) return [];
@@ -74,22 +102,13 @@ const Results = () => {
   const cmsHero = parseStructured('exam_results_hero');
   const examHero = cmsHero[0] || {};
 
-  const yearTerms = useMemo(() => generateYearTerms(), []);
-  const defaultTerm = useMemo(() => {
-    const t = getCurrentTerm();
-    const month = new Date().getMonth();
-    const year = new Date().getFullYear();
-    const sy = month >= 8 ? year : year - 1;
-    return `${t}|${sy}/${sy + 1}`;
-  }, []);
-
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!studentId.trim()) return;
     setLoading(true);
     setError('');
     setResults(null);
-    const [term, academicYear] = (selectedTerm || defaultTerm).split('|');
+    const [term, academicYear] = (selectedTerm || terms[0]?.value || generateYearTerms()[0].value).split('|');
     try {
       const res = await fetch(`${API_URL}/public/student-report`, {
         method: 'POST',
@@ -284,9 +303,13 @@ const Results = () => {
                 value={selectedTerm}
                 onChange={(e) => setSelectedTerm(e.target.value)}
               >
-                {yearTerms.map((yt) => (
-                  <option key={yt.value} value={yt.value}>{yt.label}</option>
-                ))}
+                {termsLoading ? (
+                  <option value="">Loading terms…</option>
+                ) : (
+                  terms.map((yt) => (
+                    <option key={yt.value} value={yt.value}>{yt.label}</option>
+                  ))
+                )}
               </select>
             </div>
 
