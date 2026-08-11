@@ -10,6 +10,7 @@ import {
   FiX,
   FiUpload,
   FiFile,
+  FiPhone,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -19,6 +20,10 @@ import { Skeleton, CardSkeleton } from "../components/Skeleton";
 import api from "../lib/axios";
 
 const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID;
+const SCHOOL_ADDRESS = "No B.Y. 30 Kerawa Street, Sabon Gari, Tudun Wada, Kaduna";
+const SCHOOL_PHONE = "08069776050";
+
+const CATEGORY_ORDER = { Teaching: 0, Administrative: 1, Support: 2 };
 
 const Careers = () => {
   const { meta, loading: contentLoading } = useWebsiteContent();
@@ -30,7 +35,15 @@ const Careers = () => {
   useEffect(() => {
     api
       .get("/recruitment/jobs", { params: { school_id: SCHOOL_ID, public: true } })
-      .then((r) => setJobs(r.data.data || []))
+      .then((r) => {
+        const list = r.data.data || [];
+        list.sort(
+          (a, b) =>
+            (CATEGORY_ORDER[a.category] ?? 9) - (CATEGORY_ORDER[b.category] ?? 9) ||
+            new Date(b.created_at) - new Date(a.created_at)
+        );
+        setJobs(list);
+      })
       .catch(() => setJobs([]));
   }, []);
 
@@ -139,9 +152,9 @@ const Careers = () => {
                       </p>
                     )}
                     <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300 mb-4">
-                      {job.location && (
+                      {(job.location || SCHOOL_ADDRESS) && (
                         <p className="flex items-center gap-2">
-                          <FiMapPin className="w-4 h-4" /> {job.location}
+                          <FiMapPin className="w-4 h-4" /> {job.location || SCHOOL_ADDRESS}
                         </p>
                       )}
                       {job.employment_level && (
@@ -215,6 +228,29 @@ const Careers = () => {
                 <div className="p-6 space-y-6">
                   {!showApplication ? (
                     <>
+                      <div className="grid sm:grid-cols-2 gap-3 text-sm bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                        <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                          <FiMapPin className="w-4 h-4 text-blue-600 dark:text-yellow-400" />
+                          {selectedJob.location || SCHOOL_ADDRESS}
+                        </p>
+                        <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                          <FiPhone className="w-4 h-4 text-blue-600 dark:text-yellow-400" />
+                          {SCHOOL_PHONE}
+                        </p>
+                        {selectedJob.employment_level && (
+                          <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                            <FiUsers className="w-4 h-4 text-blue-600 dark:text-yellow-400" />
+                            {selectedJob.employment_level}
+                          </p>
+                        )}
+                        {selectedJob.work_schedule && (
+                          <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                            <FiClock className="w-4 h-4 text-blue-600 dark:text-yellow-400" />
+                            {selectedJob.work_schedule}
+                          </p>
+                        )}
+                      </div>
+
                       {selectedJob.description && (
                         <div>
                           <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-white">

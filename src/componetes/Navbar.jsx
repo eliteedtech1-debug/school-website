@@ -24,7 +24,7 @@ const Navbar = ({ darkMode, setDarkMode }) => {
   return (
     <nav className="bg-white/90 dark:bg-gray-900/70 backdrop-blur-md fixed w-full z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="relative flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-2">
             {logoUrl ? (
               <img src={logoUrl} alt={schoolName} className="w-10 h-10 rounded-lg object-cover" />
@@ -59,6 +59,19 @@ const Navbar = ({ darkMode, setDarkMode }) => {
               {darkMode ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
             </button>
           </div>
+
+          {recruitment_enabled && (
+            <Link
+              to="/careers"
+              className={`md:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-1.5 rounded-full text-sm font-semibold shadow-md transition-colors ${
+                location.pathname === "/careers"
+                  ? "bg-blue-950 dark:bg-yellow-400 text-white dark:text-gray-900"
+                  : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90"
+              }`}
+            >
+              Jobs
+            </Link>
+          )}
 
           <div className="md:hidden flex items-center space-x-2">
             <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
