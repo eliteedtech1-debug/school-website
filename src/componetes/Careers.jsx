@@ -8,6 +8,8 @@ import {
   FiSend,
   FiCheck,
   FiX,
+  FiUpload,
+  FiFile,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -309,18 +311,21 @@ const ApplicationForm = ({ job, onBack, onClose }) => {
     previous_experience: "",
     skills: "",
     why_join: "",
-    resume_url: "",
-    cover_letter_url: "",
+    resume_url: null,
+    cover_letter_url: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submittedReference, setSubmittedReference] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await api.post("/recruitment/applications", {
+      const res = await api.post("/recruitment/applications", {
         ...formData,
+        resume_url: formData.resume_url?.url || "",
+        cover_letter_url: formData.cover_letter_url?.url || "",
         skills: formData.skills
           ? formData.skills.split(",").map((s) => s.trim()).filter(Boolean)
           : null,
@@ -329,6 +334,7 @@ const ApplicationForm = ({ job, onBack, onClose }) => {
       });
       setIsSubmitting(false);
       setSubmitSuccess(true);
+      setSubmittedReference(res.data?.data?.reference || null);
       toast.success("Application submitted successfully!");
     } catch (err) {
       setIsSubmitting(false);
@@ -360,6 +366,23 @@ const ApplicationForm = ({ job, onBack, onClose }) => {
             Thank you for applying. Our team will review your application and
             get back to you soon.
           </p>
+
+          {submittedReference && (
+            <div className="mb-6">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                Your Application Reference
+              </p>
+              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800">
+                <span className="font-mono font-bold text-gray-900 dark:text-white">
+                  {submittedReference}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Keep this reference — quote it if you need to follow up with the school.
+              </p>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={onClose}
@@ -500,30 +523,20 @@ const ApplicationForm = ({ job, onBack, onClose }) => {
               onChange={(e) => setFormData({ ...formData, previous_experience: e.target.value })}
             />
           </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-              Resume / CV Link
-            </label>
-            <input
-              type="url"
-              placeholder="https://..."
-              className={inputCls}
-              value={formData.resume_url}
-              onChange={(e) => setFormData({ ...formData, resume_url: e.target.value })}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-              Cover Letter Link
-            </label>
-            <input
-              type="url"
-              placeholder="https://..."
-              className={inputCls}
-              value={formData.cover_letter_url}
-              onChange={(e) => setFormData({ ...formData, cover_letter_url: e.target.value })}
-            />
-          </div>
+          <UploadField
+            label="Resume / CV"
+            value={formData.resume_url}
+            onChange={(resume_url) => setFormData({ ...formData, resume_url })}
+            endpoint="/recruitment/upload/resume"
+            fieldKey="resume"
+          />
+          <UploadField
+            label="Cover Letter (optional)"
+            value={formData.cover_letter_url}
+            onChange={(cover_letter_url) => setFormData({ ...formData, cover_letter_url })}
+            endpoint="/recruitment/upload/cover-letter"
+            fieldKey="cover_letter"
+          />
           <div className="md:col-span-2">
             <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
               Why do you want to join us?
@@ -559,6 +572,114 @@ const ApplicationForm = ({ job, onBack, onClose }) => {
         </div>
       )}
     </form>
+  );
+};
+
+const FILE_LIMIT_MB = 5;
+const ACCEPTED_FILES = [".pdf", ".doc", ".docx", ".odt"];
+const ACCEPT_ATTR = ACCEPTED_FILES.join(",");
+
+/**
+ * File upload field that uploads to the elite-api recruitment upload
+ * endpoints (POST /api/recruitment/upload/:kind) and stores the returned
+ * file URL for submission with the application.
+ */
+const UploadField = ({ label, value, onChange, endpoint, fieldKey }) => {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file
+    if (!file) return;
+
+    // Client-side validation mirroring the backend's file filter
+    const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
+    if (!ACCEPTED_FILES.includes(ext)) {
+      setError(`Only ${ACCEPTED_FILES.join(", ")} files are allowed`);
+      return;
+    }
+    if (file.size > FILE_LIMIT_MB * 1024 * 1024) {
+      setError(`File must be ${FILE_LIMIT_MB}MB or smaller`);
+      return;
+    }
+
+    setError("");
+    setUploading(true);
+    const formData = new FormData();
+    formData.append(fieldKey, file);
+    formData.append("school_id", SCHOOL_ID);
+    try {
+      const res = await api.post(endpoint, formData, { timeout: 60000 });
+      const data = res.data?.data || {};
+      onChange({ url: data.url, filename: file.name });
+      toast.success(`${label.replace(" (optional)", "")} uploaded`);
+    } catch (err) {
+      setError(err.response?.data?.message || "Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="md:col-span-2">
+      <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+        {label}
+      </label>
+      {value ? (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/30">
+          <div className="flex items-center gap-2 min-w-0">
+            <FiFile className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
+            <span className="text-sm text-gray-800 dark:text-gray-200 truncate">
+              {value.filename || "File attached"}
+            </span>
+            <a
+              href={value.url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-blue-600 dark:text-blue-400 underline shrink-0"
+            >
+              View
+            </a>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 hover:underline shrink-0"
+          >
+            <FiX className="w-3 h-3" /> Remove
+          </button>
+        </div>
+      ) : (
+        <label
+          className={`flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-lg cursor-pointer hover:border-blue-950 dark:hover:border-yellow-400 transition-colors ${
+            uploading ? "opacity-50 pointer-events-none" : ""
+          }`}
+        >
+          {uploading ? (
+            <span className="text-sm text-gray-400 flex items-center gap-2">
+              <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              Uploading…
+            </span>
+          ) : (
+            <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <FiUpload className="w-4 h-4" /> Click to upload
+            </span>
+          )}
+          <input
+            type="file"
+            className="hidden"
+            accept={ACCEPT_ATTR}
+            onChange={handleFile}
+            disabled={uploading}
+          />
+        </label>
+      )}
+      {error && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{error}</p>}
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+        {ACCEPTED_FILES.join(", ")} · max {FILE_LIMIT_MB}MB
+      </p>
+    </div>
   );
 };
 
