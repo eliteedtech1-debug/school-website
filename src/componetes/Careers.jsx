@@ -646,7 +646,10 @@ const UploadField = ({ label, value, onChange, endpoint, fieldKey }) => {
     formData.append(fieldKey, file);
     formData.append("school_id", SCHOOL_ID);
     try {
-      const res = await api.post(endpoint, formData, { timeout: 60000 });
+      const res = await api.post(endpoint, formData, {
+        timeout: 60000,
+        headers: { "X-School-Id": SCHOOL_ID },
+      });
       const data = res.data?.data || {};
       onChange({ url: data.url, filename: file.name });
       toast.success(`${label.replace(" (optional)", "")} uploaded`);
