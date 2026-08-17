@@ -201,7 +201,7 @@ export default function Navbar() {
 
   return (
     <nav className="fixed items-center top-0 left-0 w-full z-50 bg-white/90 dark:bg-gray-800/80 backdrop-blur shadow">
-      <div className="container max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div className="relative container max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           {logoUrl ? (
@@ -218,11 +218,30 @@ export default function Navbar() {
             </div>
           )}
           {schoolName && (
-            <span className="text-lg font-bold text-gray-800 dark:text-white hidden sm:inline">
+            <span className="text-lg font-bold text-gray-800 dark:text-white hidden md:inline">
               {schoolName}
             </span>
           )}
         </Link>
+
+        {/* Mobile: blinking Jobs CTA pinned to top-center of the topbar
+            (visible without opening the menu) while recruitment is enabled */}
+        {recruitment_enabled && (
+          <Link
+            to="/careers"
+            onClick={() => setOpen(false)}
+            className="md:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+                       inline-flex items-center gap-1.5 bg-red-600 text-white font-bold
+                       px-4 py-1.5 rounded-full shadow-lg animate-job-blink hover:bg-red-700
+                       hover:animate-none transition-colors z-10"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+            </span>
+            Jobs
+          </Link>
+        )}
 
         {/* Desktop nav links */}
         <ul className="hidden md:flex font-semibold gap-6 text-gray-700">
