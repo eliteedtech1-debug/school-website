@@ -648,7 +648,10 @@ const UploadField = ({ label, value, onChange, endpoint, fieldKey }) => {
     try {
       const res = await api.post(endpoint, formData, {
         timeout: 60000,
-        headers: { "X-School-Id": SCHOOL_ID },
+        headers: {
+          "X-School-Id": SCHOOL_ID,
+          "Content-Type": "multipart/form-data",
+        },
       });
       const data = res.data?.data || {};
       onChange({ url: data.url, filename: file.name });
