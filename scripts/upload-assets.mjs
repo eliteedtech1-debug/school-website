@@ -7,7 +7,7 @@ import FormData from 'form-data';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ASSETS_DIR = join(__dirname, '..', 'src', 'assets');
-const FILE_REPO_URL = process.env.FILE_REPO_URL || 'https://files.elitecore.com.ng';
+const FILE_REPO_URL = process.env.FILE_REPO_URL || 'https://files.elitesms.com.ng';
 const API_KEY = process.env.FILE_REPO_API_KEY;
 
 if (!API_KEY) {

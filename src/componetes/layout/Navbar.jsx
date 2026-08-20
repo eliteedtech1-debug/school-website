@@ -18,7 +18,7 @@ const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID;
       → School uses a different LMS or custom domain. Use as-is.
 
    2. Auto-build from VITE_SCHOOL_SHORT_NAME:
-      Production : https://{short_name}.elitecore.com.ng/login?type={type}
+      Production : https://{short_name}.elitesms.com.ng/login?type={type}
       Dev (localhost): http://localhost:3000/login?type={type}&school={short_name}
         — the ?school= param auto-fills the unified-login Short Name input.
 ──────────────────────────────────────────────────────────────────────── */
@@ -46,7 +46,7 @@ function loginUrl(type) {
     return `http://localhost:3000/login?${params.toString()}`;
   }
   const subdomain = SHORT_NAME || window.location.hostname.split(".")[0];
-  return `https://${subdomain}.elitecore.com.ng/login?type=${type}`;
+  return `https://${subdomain}.elitesms.com.ng/login?type=${type}`;
 }
 
 /* ─── Login dropdown items ──────────────────────────────────────────── */
