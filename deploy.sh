@@ -56,7 +56,7 @@ echo "================================================"
 
 # --- Step 0: Generate .env.production from the school JSON --------------------
 echo "📋 Step 0: Generating .env.production from $JSON..."
-python3 - "$JSON" <<'PY'
+python3 - "$JSON" <<'PY' > .env.production
 import json, sys
 cfg = json.load(open(sys.argv[1]))
 skip = {'deploy', '__note'}
