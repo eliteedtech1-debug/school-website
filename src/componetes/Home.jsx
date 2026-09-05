@@ -189,7 +189,12 @@ const Home = () => {
       }))
     : [];
 
-  const academicStreams = cmsStreams;
+  const academicStreams = cmsStreams.length > 0
+    ? cmsStreams.map(s => ({
+        ...s,
+        icon: resolveIcon(s.icon),
+      }))
+    : [];
 
   const coreValues = cmsCoreValues.length > 0
     ? cmsCoreValues.map(v => ({

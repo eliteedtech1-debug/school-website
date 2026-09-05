@@ -170,7 +170,7 @@ echo "✅ Deployed to: ${SITE:-$HOST}"
 echo ""
 echo "📋 Step 4: Pushing source to git repository..."
 
-GITHUB_TOKEN="${GITHUB_TOKEN:-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}"
+GITHUB_TOKEN="${GITHUB_TOKEN:-${GITHUB_TOKEN}}"
 GIT_REPO="https://${GITHUB_TOKEN}@github.com/eliteedtech1-debug/school-website.git"
 
 if git diff --quiet && git diff --cached --quiet; then

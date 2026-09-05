@@ -20,8 +20,6 @@ import { Skeleton, CardSkeleton } from "../components/Skeleton";
 import api from "../lib/axios";
 
 const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID;
-const SCHOOL_ADDRESS = "No B.Y. 30 Kerawa Street, Sabon Gari, Tudun Wada, Kaduna";
-const SCHOOL_PHONE = "08069776050";
 
 const CATEGORY_ORDER = { Teaching: 0, Administrative: 1, Support: 2 };
 
@@ -47,7 +45,9 @@ const Careers = () => {
       .catch(() => setJobs([]));
   }, []);
 
-  const schoolName = meta?.school_name || "Our School";
+  const schoolName    = meta?.school_name || "Our School";
+  const schoolAddress = meta?.address || "";
+  const schoolPhone   = meta?.phone || "";
 
   const fadeUp = {
     hidden: { opacity: 0, y: 60 },
@@ -152,9 +152,9 @@ const Careers = () => {
                       </p>
                     )}
                     <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300 mb-4">
-                      {(job.location || SCHOOL_ADDRESS) && (
+                      {(job.location || schoolAddress) && (
                         <p className="flex items-center gap-2">
-                          <FiMapPin className="w-4 h-4" /> {job.location || SCHOOL_ADDRESS}
+                          <FiMapPin className="w-4 h-4" /> {job.location || schoolAddress}
                         </p>
                       )}
                       {job.employment_level && (
@@ -231,11 +231,11 @@ const Careers = () => {
                       <div className="grid sm:grid-cols-2 gap-3 text-sm bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                         <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                           <FiMapPin className="w-4 h-4 text-blue-600 dark:text-yellow-400" />
-                          {selectedJob.location || SCHOOL_ADDRESS}
+                          {selectedJob.location || schoolAddress}
                         </p>
                         <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                           <FiPhone className="w-4 h-4 text-blue-600 dark:text-yellow-400" />
-                          {SCHOOL_PHONE}
+                          {schoolPhone}
                         </p>
                         {selectedJob.employment_level && (
                           <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">

@@ -4,6 +4,10 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5123/api';
 const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID;
 const WEBSITE_TOKEN = import.meta.env.VITE_WEBSITE_TOKEN;
+const SCHOOL_NAME = import.meta.env.VITE_SCHOOL_NAME || '';
+const SCHOOL_LOGO = import.meta.env.VITE_SCHOOL_LOGO || '';
+const SCHOOL_SHORT_NAME = import.meta.env.VITE_SCHOOL_SHORT_NAME || '';
+const SCHOOL_MOTTO = import.meta.env.VITE_SCHOOL_MOTTO || '';
 
 // Fetch public website sections with TTL cache (re-fetch after 5 min)
 let _cache = null;
@@ -46,8 +50,33 @@ const fetchSections = () => {
       params: { school_id: SCHOOL_ID },
       headers: WEBSITE_TOKEN ? { Authorization: `Bearer ${WEBSITE_TOKEN}` } : {},
     })
-    .then(r => { _cache = r.data; return _cache; })
-    .catch(() => ({ sections: [], meta: null, theme: null, recruitment_enabled: false }));
+    .then(r => {
+      const data = r.data;
+      // Merge env var fallbacks into meta so school name/logo show even without CMS branding section
+      if (data.meta) {
+        if (!data.meta.school_name && SCHOOL_NAME) data.meta.school_name = SCHOOL_NAME;
+        if (!data.meta.logo_url && SCHOOL_LOGO) data.meta.logo_url = SCHOOL_LOGO;
+        if (!data.meta.tagline && SCHOOL_SHORT_NAME) data.meta.tagline = SCHOOL_SHORT_NAME;
+        if (!data.meta.school_motto && SCHOOL_MOTTO) data.meta.school_motto = SCHOOL_MOTTO;
+      } else {
+        data.meta = {};
+        if (SCHOOL_NAME) data.meta.school_name = SCHOOL_NAME;
+        if (SCHOOL_LOGO) data.meta.logo_url = SCHOOL_LOGO;
+        if (SCHOOL_SHORT_NAME) data.meta.tagline = SCHOOL_SHORT_NAME;
+        if (SCHOOL_MOTTO) data.meta.school_motto = SCHOOL_MOTTO;
+      }
+      _cache = data;
+      return _cache;
+    })
+    .catch(() => {
+      // Even on error, provide env var fallbacks
+      const fallbackMeta = {};
+      if (SCHOOL_NAME) fallbackMeta.school_name = SCHOOL_NAME;
+      if (SCHOOL_LOGO) fallbackMeta.logo_url = SCHOOL_LOGO;
+      if (SCHOOL_SHORT_NAME) fallbackMeta.tagline = SCHOOL_SHORT_NAME;
+      if (SCHOOL_MOTTO) fallbackMeta.school_motto = SCHOOL_MOTTO;
+      return { sections: [], meta: Object.keys(fallbackMeta).length ? fallbackMeta : null, theme: null, recruitment_enabled: false };
+    });
   return _promise;
 };
 

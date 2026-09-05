@@ -248,18 +248,6 @@ export default function Navbar() {
           <li><Link className={linkClass("/")} to="/">Home</Link></li>
           <li><Link className={linkClass("/about")} to="/about">About</Link></li>
           <li><Link className={linkClass("/gallery")} to="/gallery">Gallery</Link></li>
-          <li>
-            <button
-              onClick={() => setApplyOpen(true)}
-              className={
-                location.pathname === "/apply"
-                  ? "text-black dark:text-yellow-400 font-semibold underline underline-offset-8 dark:decoration-yellow-400 decoration-blue-950 drop-shadow"
-                  : "text-black dark:text-gray-50/90 font-bold hover:text-blue-950 transition"
-              }
-            >
-              Apply
-            </button>
-          </li>
           {recruitment_enabled && (
             <li>
               {recruiting ? (

@@ -14,35 +14,10 @@ const AUTH_HEADER = WEBSITE_TOKEN ? { Authorization: `Bearer ${WEBSITE_TOKEN}` }
 
 const TERMS = ['First Term', 'Second Term', 'Third Term'];
 
-const GRADE_BOUNDARIES = [
-  { grade: 'A', min: 80, max: 100, remark: 'Excellent' },
-  { grade: 'B+', min: 70, max: 79, remark: 'Very Good' },
-  { grade: 'B', min: 60, max: 69, remark: 'Good' },
-  { grade: 'C+', min: 50, max: 59, remark: 'Credit' },
-  { grade: 'C', min: 40, max: 49, remark: 'Pass' },
-  { grade: 'D', min: 30, max: 39, remark: 'Fair' },
-  { grade: 'F', min: 0, max: 29, remark: 'Fail' },
-];
-
-const getGrade = (score) => {
-  if (score == null) return { grade: '-', remark: '-' };
-  const found = GRADE_BOUNDARIES.find(b => score >= b.min && score <= b.max);
+const getGrade = (score, boundaries = []) => {
+  if (score == null || !boundaries.length) return { grade: '-', remark: '-' };
+  const found = boundaries.find(b => score >= b.min && score <= b.max);
   return found ? { grade: found.grade, remark: found.remark } : { grade: '-', remark: '-' };
-};
-
-// Fallback terms (only used if the school's academic calendar can't be loaded)
-const generateYearTerms = () => {
-  const year = new Date().getFullYear();
-  const month = new Date().getMonth();
-  const startYear = month >= 8 ? year : year - 1;
-  const items = [];
-  for (let i = -1; i <= 1; i++) {
-    const sy = startYear + i;
-    for (const term of TERMS) {
-      items.push({ term, academicYear: `${sy}/${sy + 1}`, label: `${term} (${sy}/${sy + 1})`, value: `${term}|${sy}/${sy + 1}` });
-    }
-  }
-  return items;
 };
 
 const Results = () => {
@@ -56,6 +31,9 @@ const Results = () => {
   // Dynamic terms from the school's academic calendar (public API)
   const [terms, setTerms] = useState([]);
   const [termsLoading, setTermsLoading] = useState(true);
+
+  // Grade boundaries from public API
+  const [gradeBoundaries, setGradeBoundaries] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,11 +55,31 @@ const Results = () => {
           const active = items.find((t) => t.status === 'Active');
           if (active) setSelectedTerm(active.value);
         } else {
-          setTerms(generateYearTerms());
+          setTerms([]);
         }
       })
-      .catch(() => { if (!cancelled) setTerms(generateYearTerms()); })
+      .catch(() => { if (!cancelled) setTerms([]); })
       .finally(() => { if (!cancelled) setTermsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch grade boundaries from public API
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_URL}/public/grade-boundaries?school_id=${encodeURIComponent(SCHOOL_ID)}`, { headers: { ...AUTH_HEADER } })
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        if (d.success && Array.isArray(d.data) && d.data.length > 0) {
+          setGradeBoundaries(d.data.map(g => ({
+            grade: g.grade,
+            min: g.min_percentage ?? 0,
+            max: g.max_percentage ?? 100,
+            remark: g.remark || '',
+          })));
+        }
+      })
+      .catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
@@ -108,7 +106,12 @@ const Results = () => {
     setLoading(true);
     setError('');
     setResults(null);
-    const [term, academicYear] = (selectedTerm || terms[0]?.value || generateYearTerms()[0].value).split('|');
+    const [term, academicYear] = (selectedTerm || terms[0]?.value || '').split('|');
+    if (!term || !academicYear) {
+      setError('No academic terms available. Please contact the school.');
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/public/student-report`, {
         method: 'POST',
@@ -142,7 +145,7 @@ const Results = () => {
     const termLabel = first?.term || '';
     const academicYear = first?.academic_year || '';
     const subjects = results.rows.map(r => {
-      const computed = getGrade(r.total_score);
+      const computed = getGrade(r.total_score, gradeBoundaries);
       return {
         subject: r.subject,
         subject_code: r.subject_code,
@@ -182,15 +185,12 @@ const Results = () => {
       email_address: meta?.email || '',
       address: meta?.address || '',
     };
-    const defaultGradeBoundaries = [
-      { grade: 'A', min_percentage: 80, max_percentage: 100, remark: 'Excellent' },
-      { grade: 'B+', min_percentage: 70, max_percentage: 79, remark: 'Very Good' },
-      { grade: 'B', min_percentage: 60, max_percentage: 69, remark: 'Good' },
-      { grade: 'C+', min_percentage: 50, max_percentage: 59, remark: 'Credit' },
-      { grade: 'C', min_percentage: 40, max_percentage: 49, remark: 'Pass' },
-      { grade: 'D', min_percentage: 30, max_percentage: 39, remark: 'Fair' },
-      { grade: 'F', min_percentage: 0, max_percentage: 29, remark: 'Fail' },
-    ];
+    const defaultGradeBoundaries = gradeBoundaries.map(g => ({
+      grade: g.grade,
+      min_percentage: g.min,
+      max_percentage: g.max,
+      remark: g.remark,
+    }));
     const reportConfig = {
       visibility: {
         showPosition: false,
@@ -383,14 +383,14 @@ const Results = () => {
                       <td className="px-4 py-3 text-center font-semibold">{r.total_score ?? '-'}</td>
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${
-                          ((r.grade || getGrade(r.total_score).grade).toUpperCase()) === 'A' ? 'bg-green-100 text-green-700' :
-                          ((r.grade || getGrade(r.total_score).grade).toUpperCase()) === 'B' ? 'bg-blue-100 text-blue-700' :
-                          ((r.grade || getGrade(r.total_score).grade).toUpperCase()) === 'C' ? 'bg-yellow-100 text-yellow-700' :
-                          ((r.grade || getGrade(r.total_score).grade).toUpperCase()) === 'D' ? 'bg-orange-100 text-orange-700' :
+                          ((r.grade || getGrade(r.total_score, gradeBoundaries).grade).toUpperCase()) === 'A' ? 'bg-green-100 text-green-700' :
+                          ((r.grade || getGrade(r.total_score, gradeBoundaries).grade).toUpperCase()) === 'B' ? 'bg-blue-100 text-blue-700' :
+                          ((r.grade || getGrade(r.total_score, gradeBoundaries).grade).toUpperCase()) === 'C' ? 'bg-yellow-100 text-yellow-700' :
+                          ((r.grade || getGrade(r.total_score, gradeBoundaries).grade).toUpperCase()) === 'D' ? 'bg-orange-100 text-orange-700' :
                           'bg-red-100 text-red-700'
-                        }`}>{r.grade || getGrade(r.total_score).grade}</span>
+                        }`}>{r.grade || getGrade(r.total_score, gradeBoundaries).grade}</span>
                       </td>
-                      <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{r.remark || getGrade(r.total_score).remark || '-'}</td>
+                      <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{r.remark || getGrade(r.total_score, gradeBoundaries).remark || '-'}</td>
                       <td className="px-4 py-3 text-center text-gray-500">{r.term || '-'}</td>
                     </tr>
                   ))}

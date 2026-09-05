@@ -1,0 +1,28 @@
+{
+  "school_id": "SCH/18",
+  "branch_id": "",
+  "school_short_name": "yma",
+  "website_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY2hvb2xfaWQiOiJTQ0gvMTgiLCJ0eXBlIjoid2Vic2l0ZSIsImlhdCI6MTc4ODYyNTcwNH0.XeHfS-VTmsjPG50fobV6zYvXxDi0ZdKHbKZ6bkcy7xM",
+  "admission_url": "",
+  "app_name": "YAZID MEMORIAL ACADEMY",
+  "school_name": "YAZID MEMORIAL ACADEMY",
+  "school_logo": "https://res.cloudinary.com/dp0qdgbih/image/upload/v1745998350/rhflrtl8alrfr1eilb0g.png",
+  "app_logo": "https://res.cloudinary.com/dp0qdgbih/image/upload/v1745998350/rhflrtl8alrfr1eilb0g.png",
+  "primary_color": "#1e3a5f",
+  "secondary_color": "#f59e0b",
+  "login_url_staff": "https://yma.elitesms.com.ng/login?type=staff",
+  "login_url_parent": "https://yma.elitesms.com.ng/login?type=parent",
+  "login_url_student": "https://yma.elitesms.com.ng/login?type=student",
+  "api_url": "https://server.brainstorm.ng/elite-api/api",
+  "app_url": "https://yma.elitesms.com.ng",
+  "school_tagline": "EDUCATION IS LIGHT",
+  "school_address": "Satellite Town, Tudun Yola, Kabuga Kano",
+  "school_phone": "09035384184",
+  "deploy": {
+    "ssh_key": "~/.ssh/go54_elitecore",
+    "ssh_user": "elitesc1",
+    "host": "131.153.147.34",
+    "path": "/home2/elitesc1/public_html/yazidacademy.eliteedu.tech",
+    "site": "https://yazidacademy.com.ng"
+  }
+}
