@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5123/api';
+const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_DEV_API_URL || 'http://localhost:34567';
 const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID;
 const WEBSITE_TOKEN = import.meta.env.VITE_WEBSITE_TOKEN;
 const SCHOOL_NAME = import.meta.env.VITE_SCHOOL_NAME || '';

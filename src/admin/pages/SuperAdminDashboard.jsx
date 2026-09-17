@@ -17,57 +17,51 @@ import {
   Activity
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import api from '../../lib/axios';
 
 const SuperAdminDashboard = () => {
-  // Mock data for super admin dashboard
-  const { data: stats, isLoading } = useQuery('super-admin-stats', async () => {
-    return {
-      schools: { total: 12, active: 10, inactive: 2 },
-      users: { total: 156, admins: 24, superAdmins: 3 },
-      applications: { total: 2340, thisMonth: 234, approved: 1890 },
-      revenue: { total: 45600000, thisMonth: 3800000, growth: 12.5 }
-    };
+  // Fetch live dashboard stats from the backend API
+  const { data: statsResponse, isLoading } = useQuery({
+    queryKey: ['super-admin-stats'],
+    queryFn: async () => {
+      const res = await api.get('/api/public/website/dashboard-stats');
+      return res.data?.data || {};
+    },
+    refetchInterval: 120000, // Refetch every 2 minutes
   });
+  const stats = statsResponse;
 
-  const { data: recentSchools, isLoading: schoolsLoading } = useQuery('recent-schools', async () => {
-    return [
-      {
-        id: 1,
-        name: 'Dr. Kabiru Gwarzo Academy',
-        location: 'Kano, Nigeria',
-        status: 'active',
-        students: 450,
-        createdAt: '2024-01-15',
-        lastActive: '2025-02-04T10:30:00Z'
-      },
-      {
-        id: 2,
-        name: 'Al-Hikmah Islamic School',
-        location: 'Lagos, Nigeria',
-        status: 'active',
-        students: 320,
-        createdAt: '2024-03-20',
-        lastActive: '2025-02-03T14:20:00Z'
-      },
-      {
-        id: 3,
-        name: 'Madinah Academy',
-        location: 'Abuja, Nigeria',
-        status: 'inactive',
-        students: 180,
-        createdAt: '2024-06-10',
-        lastActive: '2025-01-28T09:15:00Z'
+  // Fetch recent schools from the backend API
+  const { data: recentSchoolsResponse, isLoading: schoolsLoading } = useQuery({
+    queryKey: ['recent-schools'],
+    queryFn: async () => {
+      const res = await api.get('/api/public/website/schools?limit=10');
+      return (res.data?.data || []).slice(0, 5);
+    },
+  });
+  const recentSchools = recentSchoolsResponse || [];
+
+  // System health - fetch from backend health endpoint or use stats for context
+  const { data: systemHealth, isLoading: healthLoading } = useQuery({
+    queryKey: ['system-health'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/api/public/website/stats');
+        const d = res.data?.data || {};
+        return {
+          database: { status: 'healthy', lastChecked: d.as_of },
+          api: { status: 'healthy', asOf: d.as_of },
+          subscriptions: { active: stats?.subscriptions?.active || 0 },
+        };
+      } catch {
+        return {
+          database: { status: 'unknown' },
+          api: { status: 'unknown' },
+          subscriptions: { active: 0 },
+        };
       }
-    ];
-  });
-
-  const { data: systemHealth, isLoading: healthLoading } = useQuery('system-health', async () => {
-    return {
-      database: { status: 'healthy', responseTime: '45ms', uptime: '99.9%' },
-      api: { status: 'healthy', responseTime: '120ms', uptime: '99.8%' },
-      storage: { status: 'healthy', usage: '68%', available: '2.4TB' },
-      backup: { status: 'healthy', lastBackup: '2025-02-04T02:00:00Z', nextBackup: '2025-02-05T02:00:00Z' }
-    };
+    },
+    enabled: !!stats, // Only fetch after stats are loaded
   });
 
   if (isLoading) {
@@ -78,38 +72,38 @@ const SuperAdminDashboard = () => {
     {
       title: 'Total Schools',
       value: stats?.schools?.total || 0,
-      change: '+2 this month',
+      change: `${stats?.schools?.active || 0} active`,
       changeType: 'positive',
       icon: School,
       color: 'blue',
       subtitle: `${stats?.schools?.active || 0} active, ${stats?.schools?.inactive || 0} inactive`
     },
     {
-      title: 'Total Users',
-      value: stats?.users?.total || 0,
-      change: '+15 this month',
+      title: 'Total Students',
+      value: stats?.students?.total || 0,
+      change: `${stats?.students?.active || 0} active`,
       changeType: 'positive',
       icon: Users,
       color: 'green',
-      subtitle: `${stats?.users?.admins || 0} admins, ${stats?.users?.superAdmins || 0} super admins`
+      subtitle: `${stats?.students?.active || 0} active students enrolled`
     },
     {
-      title: 'Total Applications',
-      value: stats?.applications?.total || 0,
-      change: `+${stats?.applications?.thisMonth || 0} this month`,
+      title: 'Total Teachers',
+      value: stats?.teachers?.total || 0,
+      change: `${stats?.teachers?.active || 0} active`,
       changeType: 'positive',
       icon: Database,
       color: 'purple',
-      subtitle: `${stats?.applications?.approved || 0} approved applications`
+      subtitle: `${stats?.teachers?.active || 0} active teachers on staff`
     },
     {
       title: 'Total Revenue',
-      value: `₦${(stats?.revenue?.total || 0).toLocaleString()}`,
-      change: `+${stats?.revenue?.growth || 0}%`,
+      value: `₦${Number(stats?.revenue?.total || 0).toLocaleString()}`,
+      change: `₦${Number(stats?.revenue?.thisMonth || 0).toLocaleString()} this month`,
       changeType: 'positive',
       icon: TrendingUp,
       color: 'orange',
-      subtitle: `₦${(stats?.revenue?.thisMonth || 0).toLocaleString()} this month`
+      subtitle: `${stats?.subscriptions?.active || 0} active subscriptions`
     }
   ];
 
@@ -352,25 +346,31 @@ const SuperAdminDashboard = () => {
 
       {/* Analytics Overview */}
       <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Analytics Overview</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Platform Overview</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600 mb-1">
-              {((stats?.applications?.approved / stats?.applications?.total) * 100).toFixed(1)}%
-            </div>
-            <p className="text-sm text-gray-600">Application Approval Rate</p>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600 mb-1">
-              {stats?.schools?.active}
+              {stats?.schools?.active || 0}
             </div>
             <p className="text-sm text-gray-600">Active Schools</p>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600 mb-1">
-              {Math.round((stats?.users?.total || 0) / (stats?.schools?.total || 1))}
+            <div className="text-2xl font-bold text-green-600 mb-1">
+              {stats?.students?.total || 0}
             </div>
-            <p className="text-sm text-gray-600">Avg Users per School</p>
+            <p className="text-sm text-gray-600">Total Students</p>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-600 mb-1">
+              {stats?.teachers?.total || 0}
+            </div>
+            <p className="text-sm text-gray-600">Total Teachers</p>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600 mb-1">
+              {stats?.applications?.approved || 0}
+            </div>
+            <p className="text-sm text-gray-600">Approved Applications</p>
           </div>
         </div>
       </div>

@@ -13,6 +13,11 @@ set -e
 # This script derives .env.production from the JSON (quoting values so #hex
 # colours survive dotenv), builds, and deploys to the docroot in the JSON's
 # "deploy" section via a chunked SSH pipe (SCP hangs on go54).
+#
+# Safety & housekeeping: before extraction the current site files are COPIED
+# to a .backup-<timestamp> folder in the docroot (rollback path printed at the
+# end); after extraction all but the newest KEEP_BACKUPS backups are pruned,
+# so repeated school deploys never grow the docroot unbounded.
 # =============================================================================
 
 cd "$(dirname "$0")"
@@ -128,10 +133,27 @@ fi
 
 SSH_BASE="ssh -i $SSH_KEY -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=20 $SSH_USER@$HOST"
 SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=20"
+KEEP_BACKUPS="${GO54_KEEP_BACKUPS:-5}"
 
 echo ""
 echo "📋 Step 3: Deploying to ${HOST}:${DEPLOY_PATH} (via chunked SSH pipe)..."
 $SSH_BASE "mkdir -p ${DEPLOY_PATH}"
+
+# --- Back up the current site (copy, so the site stays up throughout) -----------
+STAMP=$(date +%Y%m%d-%H%M%S)
+BACKUP_DIR="${DEPLOY_PATH}/.backup-${STAMP}"
+
+echo "  📋 Backing up current site → ${BACKUP_DIR}"
+$SSH_BASE "
+  mkdir -p '${BACKUP_DIR}'
+  for item in index.html assets .htaccess; do
+    [ -e '${DEPLOY_PATH}/'\$item ] && cp -a '${DEPLOY_PATH}/'\$item '${BACKUP_DIR}/'
+  done
+  echo BACKED_UP
+" | grep -q BACKED_UP || {
+  echo "❌ Could not back up the current site — aborting before upload. Nothing changed."
+  exit 1
+}
 
 TAR_FILE="/tmp/${SCHOOL}-deploy.tar.gz"
 PARTS_DIR="/tmp/${SCHOOL}-parts"
@@ -163,8 +185,40 @@ echo "  📂 Extracting on server..."
 $SSH_BASE "cd $DEPLOY_PATH && tar -xzf $REMOTE_TAR && rm -f $REMOTE_TAR"
 rm -rf "$PARTS_DIR" "$TAR_FILE"
 
+# --- Prune old backups ----------------------------------------------------------
+# Only reached after the extract succeeded, so the new site is live and the
+# backups pruned here are superseded. Timestamped names sort chronologically;
+# head -n -N keeps the newest KEEP_BACKUPS.
+echo ""
+echo "  🧹 Pruning backups older than the newest ${KEEP_BACKUPS}..."
+PRUNE_OUT=$($SSH_BASE "
+  cd '${DEPLOY_PATH}' || exit 1
+  OLD=\$(ls -1d .backup-* 2>/dev/null | sort | head -n -${KEEP_BACKUPS})
+  if [ -n \"\$OLD\" ]; then
+    # shellcheck disable=SC2086
+    rm -rf \$OLD
+    echo \"PRUNED:\$OLD\"
+  else
+    echo PRUNE_NONE
+  fi
+" 2>/dev/null) || {
+  echo "  ⚠️  Could not reach host to prune — backups left as-is. Deploy is still good."
+}
+
+if printf '%s' "$PRUNE_OUT" | grep -q "^PRUNE_NONE$"; then
+  echo "  ✅ Nothing to prune (≤ ${KEEP_BACKUPS} backups)."
+elif printf '%s' "$PRUNE_OUT" | grep -q "^PRUNED:"; then
+  echo "  🗑️  Removed:"
+  printf '%s' "$PRUNE_OUT" | sed -n 's/^PRUNED://p' | tr '[:space:]' '[\n*]' | grep -v '^$' | while read -r d; do
+    echo "     ${DEPLOY_PATH}/$d"
+  done
+elif [ -n "$PRUNE_OUT" ]; then
+  echo "  ⚠️  Unexpected prune output — check backups manually: $PRUNE_OUT"
+fi
+
 echo ""
 echo "✅ Deployed to: ${SITE:-$HOST}"
+echo "   Backup of previous site: ${BACKUP_DIR}"
 
 # --- Step 3: Push source ---------------------------------------------------------
 echo ""

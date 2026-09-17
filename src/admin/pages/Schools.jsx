@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import toast from 'react-hot-toast';
+import api from '../../lib/axios';
 
 const Schools = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,92 +32,43 @@ const Schools = () => {
   const [editingSchool, setEditingSchool] = useState(null);
   const queryClient = useQueryClient();
 
-  // Mock data - replace with actual API call
-  const { data: schools, isLoading } = useQuery('schools', async () => {
-    return [
-      {
-        id: 1,
-        name: 'Dr. Kabiru Gwarzo Academy',
-        slug: 'dr-kabiru-gwarzo-academy',
-        location: 'Kano, Nigeria',
-        address: 'No. 123 Ahmadu Bello Way, Kano State, Nigeria',
-        phone: '+234 XXX XXX XXXX',
-        email: 'info@drkgacademy.edu.ng',
-        website: 'https://drkgacademy.edu.ng',
-        status: 'active',
-        students: 450,
-        staff: 35,
-        admins: 3,
-        createdAt: '2024-01-15T00:00:00Z',
-        lastActive: '2025-02-04T10:30:00Z',
-        templateId: null,
-        theme: {
-          primaryColor: '#3B82F6',
-          secondaryColor: '#10B981',
-          logo: '/api/uploads/schools/1/logo.png'
-        },
-        subscription: {
-          plan: 'premium',
-          status: 'active',
-          expiresAt: '2025-12-31T23:59:59Z'
-        }
-      },
-      {
-        id: 2,
-        name: 'Al-Hikmah Islamic School',
-        slug: 'al-hikmah-islamic-school',
-        location: 'Lagos, Nigeria',
-        address: 'No. 456 Victoria Island, Lagos State, Nigeria',
-        phone: '+234 XXX XXX XXXX',
-        email: 'info@alhikmah.edu.ng',
-        website: 'https://alhikmah.edu.ng',
-        status: 'active',
-        students: 320,
-        staff: 28,
-        admins: 2,
-        createdAt: '2024-03-20T00:00:00Z',
-        lastActive: '2025-02-03T14:20:00Z',
-        templateId: 1,
-        theme: {
-          primaryColor: '#059669',
-          secondaryColor: '#DC2626',
-          logo: '/api/uploads/schools/2/logo.png'
-        },
-        subscription: {
-          plan: 'standard',
-          status: 'active',
-          expiresAt: '2025-08-20T23:59:59Z'
-        }
-      },
-      {
-        id: 3,
-        name: 'Madinah Academy',
-        slug: 'madinah-academy',
-        location: 'Abuja, Nigeria',
-        address: 'No. 789 Garki District, Abuja, Nigeria',
-        phone: '+234 XXX XXX XXXX',
-        email: 'info@madinahacademy.edu.ng',
-        website: 'https://madinahacademy.edu.ng',
-        status: 'inactive',
-        students: 180,
-        staff: 15,
-        admins: 1,
-        createdAt: '2024-06-10T00:00:00Z',
-        lastActive: '2025-01-28T09:15:00Z',
-        templateId: 1,
-        theme: {
-          primaryColor: '#7C3AED',
-          secondaryColor: '#F59E0B',
-          logo: '/api/uploads/schools/3/logo.png'
-        },
-        subscription: {
-          plan: 'basic',
-          status: 'expired',
-          expiresAt: '2025-01-31T23:59:59Z'
-        }
-      }
-    ];
+  // Fetch schools from the backend API
+  const { data: schoolsResponse, isLoading } = useQuery({
+    queryKey: ['schools'],
+    queryFn: async () => {
+      const res = await api.get('/api/public/website/schools?limit=200');
+      return res.data?.data || [];
+    },
   });
+  // Map API response to the shape this component expects
+  const schools = (schoolsResponse || []).map(s => ({
+    id: s.school_id,
+    name: s.school_name,
+    slug: s.school_id?.toLowerCase().replace(/\//g, '-'),
+    location: [s.lga, s.state].filter(Boolean).join(', ') || 'Nigeria',
+    address: '',
+    phone: '',
+    email: '',
+    website: '',
+    status: s.is_onboarding ? 'inactive' : (s.status === 'Active' ? 'active' : 'inactive'),
+    students: 0,
+    staff: 0,
+    admins: 0,
+    createdAt: s.created_at || new Date().toISOString(),
+    lastActive: s.created_at || new Date().toISOString(),
+    templateId: null,
+    theme: {
+      primaryColor: '#3B82F6',
+      secondaryColor: '#10B981',
+      logo: s.badge_url || '',
+    },
+    subscription: {
+      plan: 'standard',
+      status: s.is_featured ? 'active' : 'active',
+      expiresAt: '2099-12-31T23:59:59Z',
+    },
+    is_featured: s.is_featured,
+  }));
 
   const statusOptions = [
     { value: 'all', label: 'All Schools' },

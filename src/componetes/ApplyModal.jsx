@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FiX, FiCalendar, FiExternalLink, FiMapPin } from 'react-icons/fi';
 
-const API_URL   = import.meta.env.VITE_API_URL  || '';
+const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_DEV_API_URL || 'http://localhost:34567';
 const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID || '';
 const APP_URL   = import.meta.env.VITE_APP_URL   || '';
 const WEBSITE_TOKEN  = import.meta.env.VITE_WEBSITE_TOKEN  || '';

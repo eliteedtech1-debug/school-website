@@ -6,7 +6,7 @@ import SEO from "../components/SEO";
 import { useWebsiteContent } from "../lib/useWebsiteContent";
 import EndOfTermReportTemplate from '@elscholar-ui/feature-module/academic/examinations/exam-results/EndOfTermReportTemplate';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_DEV_API_URL || 'http://localhost:34567';
 const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID || '';
 const BRANCH_ID = import.meta.env.VITE_BRANCH_ID || '';
 const WEBSITE_TOKEN = import.meta.env.VITE_WEBSITE_TOKEN || '';

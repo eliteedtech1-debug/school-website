@@ -16,7 +16,7 @@ import SEO from "../components/SEO";
 import { useWebsiteContent } from "../lib/useWebsiteContent";
 import api from "../lib/axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "";
+const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_DEV_API_URL || 'http://localhost:34567';
 const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID || "";
 const WEBSITE_TOKEN = import.meta.env.VITE_WEBSITE_TOKEN || "";
 const AUTH_HEADER = WEBSITE_TOKEN ? { Authorization: `Bearer ${WEBSITE_TOKEN}` } : {};

@@ -4,7 +4,7 @@ import fallbackStories from "./stories.js";
 import { FiArrowRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5123/api';
+const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_DEV_API_URL || 'http://localhost:34567';
 const SCHOOL_ID = import.meta.env.VITE_SCHOOL_ID;
 const WEBSITE_TOKEN = import.meta.env.VITE_WEBSITE_TOKEN;
 
